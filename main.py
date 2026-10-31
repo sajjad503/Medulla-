@@ -271,6 +271,20 @@ def parent_overview():
         "alerts": ["ثبت منظم گزارش‌کار در ۵ روز متوالی", "رشد ۱۵ درصدی در تست‌های زیست‌شناسی"]
     }
 
+# اضافه شدن مسیر جدید برای داشبورد Founder
+@app.get("/auth/founder/data")
+async def get_founder_dashboard_data():
+    return {
+        "success": True,
+        "data": {
+            "total_students": 0,
+            "total_advisors": 0,
+            "active_plans": 0,
+            "platform_status": "Online"
+        },
+        "message": "اطلاعات کلان پلتفرم با موفقیت دریافت شد"
+    }
+
 # Also support /api prefix for all endpoints
 app.add_api_route("/api/health", health, methods=["GET"])
 app.add_api_route("/api/auth/login", login, methods=["POST"])
@@ -283,6 +297,8 @@ app.add_api_route("/api/records/daily-report", daily_report, methods=["POST"])
 app.add_api_route("/api/sync/offline-queue", sync_offline_queue, methods=["POST"])
 app.add_api_route("/api/records/my-students", my_students, methods=["GET"])
 app.add_api_route("/api/records/parent-overview", parent_overview, methods=["GET"])
+# مسیر Founder با پیشوند /api
+app.add_api_route("/api/auth/founder/data", get_founder_dashboard_data, methods=["GET"])
 
 # Serve Pre-Built React Frontend from dist/ directory
 DIST_DIR = os.path.join(os.path.dirname(__file__), "dist")
@@ -307,15 +323,3 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     print(f"Starting Medulla Python server on port {port}...")
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
-    @app.get("/auth/founder/data") async def get_founder_dashboard_data():
-    # در آینده می‌توانی کوئری‌های دیتابیس MySQL را اینجا بنویسی تا آمار واقعی جایگزین شود
-    return {
-        "success": True,
-        "data": {
-            "total_students": 0,         # تعداد کل دانش‌آموزان
-            "total_advisors": 0,         # تعداد کل مشاوران
-            "active_plans": 0,           # برنامه‌های فعال
-            "platform_status": "Online"  # وضعیت سرور
-        },
-        "message": "اطلاعات کلان پلتفرم با موفقیت دریافت شد"
-    }
