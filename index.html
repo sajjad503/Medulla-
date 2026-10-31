@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function() {
+        if (typeof window === 'undefined') return;
+        var NativeWebSocket = window.WebSocket;
+        if (!NativeWebSocket) return;
+
+        function FakeViteSocket() {
+          this.readyState = 1; // WebSocket.OPEN
+          this.OPEN = 1;
+          this.CLOSED = 3;
+          this.CLOSING = 2;
+          this.CONNECTING = 0;
+          this._listeners = {};
+        }
+        FakeViteSocket.prototype.addEventListener = function(type, listener) {
+          if (!this._listeners[type]) this._listeners[type] = [];
+          this._listeners[type].push(listener);
+          if (type === 'open') {
+            setTimeout(function() {
+              try { listener({ type: 'open' }); } catch (e) {}
+            }, 0);
+          }
+        };
+        FakeViteSocket.prototype.removeEventListener = function(type, listener) {
+          if (!this._listeners[type]) return;
+          this._listeners[type] = this._listeners[type].filter(function(l) { return l !== listener; });
+        };
+        FakeViteSocket.prototype.send = function() {};
+        FakeViteSocket.prototype.close = function() {
+          this.readyState = 3;
+        };
+        FakeViteSocket.prototype.dispatchEvent = function() { return true; };
+
+        window.WebSocket = function(url, protocols) {
+          if (protocols === 'vite-hmr' || (typeof url === 'string' && (url.indexOf('token=') !== -1 || url.indexOf('vite') !== -1))) {
+            return new FakeViteSocket();
+          }
+          return new NativeWebSocket(url, protocols);
+        };
+        window.WebSocket.prototype = NativeWebSocket.prototype;
+        window.WebSocket.OPEN = NativeWebSocket.OPEN || 1;
+        window.WebSocket.CLOSED = NativeWebSocket.CLOSED || 3;
+        window.WebSocket.CLOSING = NativeWebSocket.CLOSING || 2;
+        window.WebSocket.CONNECTING = NativeWebSocket.CONNECTING || 0;
+
+        window.addEventListener('error', function(e) {
+          var msg = String(e && (e.message || (e.error && e.error.message)) || '');
+          if (msg.indexOf('WebSocket') !== -1 || msg.indexOf('ws://') !== -1 || msg.indexOf('wss://') !== -1) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+        window.addEventListener('unhandledrejection', function(e) {
+          var reason = String(e && (e.reason && (e.reason.message || e.reason)) || '');
+          if (reason.indexOf('WebSocket') !== -1) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+          }
+        }, true);
+      })();
+    </script>
+    <title>مدولا | Medulla - پلتفرم مشاوره کنکور و آکادمی هدایت تحصیلی سمنان</title>
+    <meta name="description" content="مرکز مشاوره کنکور و هدایت تحصیلی مدولا سمنان: برنامه‌ریزی هفتگی جدولی، ثبت آفلاین گزارش‌کار، آزمون‌های آزمایشی، پشتیبانی حضوری سمنان و سراسر کشور" />
+    <meta name="keywords" content="مشاوره کنکور سمنان, آموزشگاه کنکور سمنان, بهترین مشاور کنکور سمنان, مرکز مشاوره تحصیلی سمنان, برنامه ریزی درسی سمنان, آزمون آزمایشی سمنان, هدایت تحصیلی سمنان, انتخاب رشته سمنان, مدولا, medulla" />
+    <meta name="author" content="Medulla Academy Semnan" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://medulla.ir/" />
+
+    <!-- OpenGraph Social Cards -->
+    <meta property="og:type" content="business.business" />
+    <meta property="og:title" content="مدولا | Medulla - پلتفرم مشاوره کنکور و هدایت تحصیلی سمنان" />
+    <meta property="og:description" content="مرکز تخصصی هدایت تحصیلی و برنامه‌ریزی کنکور در سمنان: برنامه هفتگی جدولی، ثبت آفلاین گزارش‌کار، تایمر پومودورو، تحلیل d3، پایش والدین و مشاوره حضوری و آنلاین" />
+    <meta property="og:site_name" content="مدولا | Medulla سمنان" />
+    <meta property="og:locale" content="fa_IR" />
+    <meta property="og:image" content="/medulla-logo.jpg" />
+    <meta property="og:url" content="https://medulla.ir/" />
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="مدولا | Medulla - مرکز مشاوره کنکور و آکادمی سمنان" />
+    <meta name="twitter:description" content="سامانه یکپارچه هدایت تحصیلی سمنان، برنامه هفتگی جدولی، ثبت آفلاین گزارش‌کار، تایمر پومودورو و مشاوره تخصصی" />
+    <meta name="twitter:image" content="/medulla-logo.jpg" />
+
+    <!-- GEO Location & Regional Meta Tags (Semnan, Iran - Local SEO) -->
+    <meta name="geo.region" content="IR-15" />
+    <meta name="geo.placename" content="سمنان، ایران - بلوار قدس، مجتمع آموزشی مدولا" />
+    <meta name="geo.position" content="35.5769;53.3953" />
+    <meta name="ICBM" content="35.5769, 53.3953" />
+
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <meta name="theme-color" content="#0C1D3F" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="مدولا سمنان" />
+    <link rel="apple-touch-icon" href="/medulla-logo.jpg" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="shortcut icon" href="/icon.svg" />
+
+    <!-- Schema.org Structured Data (JSON-LD) with Semnan LocalBusiness & EducationalOrganization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://medulla.ir/#app",
+          "name": "مدولا | Medulla",
+          "alternateName": "Medulla EdTech Platform",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "All, Web, Android, iOS, Windows, macOS",
+          "description": "پلتفرم جامع مشاوره تحصیلی، برنامه‌ریزی هفتگی کنکور، مدیریت آموزشگاه‌ها، پایش والدین با قابلیت استفاده ۱۰۰٪ آفلاین و اتصال به درگاه شاپرک",
+          "offers": {
+            "@type": "Offer",
+            "price": "490000",
+            "priceCurrency": "IRR",
+            "availability": "https://schema.org/InStock"
+          },
+          "featureList": [
+            "برنامه‌ریزی هفتگی جدولی با تفکیک روز و پارت",
+            "ثبت و ارسال گزارش‌کار حتی در حالت قطع بودن اینترنت (Offline-First)",
+            "حالت تمرکز پومودورو با صداهای آرام‌بخش محیطی",
+            "اتصال به درگاه‌های بانکی شاپرک با تسهیم سهم مشاور",
+            "سامانه پایش والدین و تحلیل نمرات با نمودار d3",
+            "پشتیبانی حضوری و آزمون‌های شبیه‌ساز کنکور در شعبه سمنان"
+          ]
+        },
+        {
+          "@type": ["EducationalOrganization", "LocalBusiness"],
+          "@id": "https://medulla.ir/#semnan-branch",
+          "name": "مدولا | مرکز مشاوره و هدایت تحصیلی کنکور سمنان",
+          "alternateName": ["آکادمی مدولا سمنان", "Medulla Academy Semnan", "مرکز مشاوره تحصیلی مدولا در سمنان"],
+          "description": "مرکز تخصصی هدایت تحصیلی و برنامه‌ریزی کنکور سراسری، آزمون‌های آزمایشی، انتخاب رشته و پایش تحصیلی دانش‌آموزان در شهر سمنان با پشتیبانی حضوری و آنلاین.",
+          "url": "https://medulla.ir/",
+          "logo": "https://medulla.ir/medulla-logo.jpg",
+          "image": "https://medulla.ir/medulla-logo.jpg",
+          "priceRange": "$$",
+          "telephone": "+98-23-33345678",
+          "hasMap": "https://maps.google.com/?q=35.5769,53.3953",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "بلوار قدس، نبش خیابان نهم، مجتمع آموزشی مدولا، طبقه ۳",
+            "addressLocality": "سمنان",
+            "addressRegion": "استان سمنان",
+            "postalCode": "3513812345",
+            "addressCountry": "IR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 35.5769,
+            "longitude": 53.3953
+          },
+          "openingHoursSpecification": [
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday"],
+              "opens": "08:00",
+              "closes": "21:00",
+              "description": "مشاوره حضوری، برنامه‌ریزی تحصیلی و ثبت گزارش‌کار"
+            },
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": "Thursday",
+              "opens": "08:00",
+              "closes": "18:00",
+              "description": "رفع اشکال هفتگی و تحلیل آزمونک‌های آمادگی"
+            },
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": "Friday",
+              "opens": "10:00",
+              "closes": "14:00",
+              "description": "برگزاری آزمون شبیه‌ساز کنکور و پشتیبانی تحلیلی"
+            }
+          ],
+          "contactPoint": [
+            {
+              "@type": "ContactPoint",
+              "telephone": "+98-23-33345678",
+              "contactType": "customer service",
+              "contactOption": "TollFree",
+              "areaServed": ["IR-15", "سمنان", "شاهرود", "دامغان", "گرمسار", "مهدی‌شهر"],
+              "availableLanguage": ["Persian", "fa"],
+              "hoursAvailable": {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
+                "opens": "08:00",
+                "closes": "21:00"
+              }
+            },
+            {
+              "@type": "ContactPoint",
+              "telephone": "+98-912-000-0003",
+              "contactType": "admissions",
+              "areaServed": "IR",
+              "availableLanguage": ["Persian", "fa"]
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

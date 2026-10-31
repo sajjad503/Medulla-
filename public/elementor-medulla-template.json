@@ -1,0 +1,42 @@
+{
+  "version": "0.4",
+  "title": "مدولا | پنل جامع هدایت تحصیلی و آزمون",
+  "type": "page",
+  "content": [
+    {
+      "id": "medulla_sec_1",
+      "elType": "section",
+      "settings": {
+        "layout": "full_width",
+        "height": "full",
+        "padding": {
+          "unit": "px",
+          "top": "0",
+          "right": "0",
+          "bottom": "0",
+          "left": "0",
+          "isLinked": true
+        }
+      },
+      "elements": [
+        {
+          "id": "medulla_col_1",
+          "elType": "column",
+          "settings": {
+            "_column_size": 100
+          },
+          "elements": [
+            {
+              "id": "medulla_html_widget",
+              "elType": "widget",
+              "widgetType": "html",
+              "settings": {
+                "html": "<div style=\"width:100%; height:100vh; overflow:hidden; margin:0; padding:0;\">\n  <iframe src=\"https://mymedulla-backend.liara.run\" style=\"width:100%; height:100%; border:none; display:block;\" allow=\"camera; microphone; geolocation\" allowfullscreen></iframe>\n</div>"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

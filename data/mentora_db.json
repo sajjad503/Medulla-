@@ -1,0 +1,920 @@
+{
+  "workspaces": [
+    {
+      "id": 1,
+      "name": "آکادمی هدف (شعبه مرکزی)",
+      "manager_id": 2,
+      "manager_name": "مهندس رضایی",
+      "phone": "09120000002",
+      "status": "active",
+      "debt": 0,
+      "revenue": 145000000
+    },
+    {
+      "id": 2,
+      "name": "موسسه کنکور اندیشه و قلم",
+      "manager_id": 11,
+      "manager_name": "دکتر ناصری",
+      "phone": "09121111111",
+      "status": "active",
+      "debt": 18500000,
+      "revenue": 62000000
+    },
+    {
+      "id": 3,
+      "name": "آکادمی نخبگان شریف",
+      "manager_id": 12,
+      "manager_name": "مهندس کاویانی",
+      "phone": "09122222222",
+      "status": "suspended",
+      "debt": 32000000,
+      "revenue": 38000000
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "workspace_id": 1,
+      "role": "founder",
+      "full_name": "سجاد حامدی (مدیر کل مدولا)",
+      "phone_number": "09100341561",
+      "password_hash": "$2b$10$lTicNOxYd2J2AZa76gbgoeavrXnj5RdtLrwWNHxl9YofQlRDm3dCW",
+      "status": "active",
+      "custom_group": "مدیر ارشد",
+      "grade": "سیستم"
+    },
+    {
+      "id": 2,
+      "workspace_id": 1,
+      "role": "manager",
+      "full_name": "مهندس رضایی",
+      "phone_number": "09120000002",
+      "password_hash": "$2b$10$C77HXWQJZniC0qLGagESqO0NTINeendNXlQspk9e5g0h4QUHGD3IG",
+      "status": "active",
+      "custom_group": "مدیر آکادمی",
+      "grade": "مدیریت"
+    },
+    {
+      "id": 3,
+      "workspace_id": 1,
+      "role": "advisor",
+      "full_name": "دکتر کاظمی",
+      "phone_number": "09120000003",
+      "password_hash": "$2b$10$C77HXWQJZniC0qLGagESqO0NTINeendNXlQspk9e5g0h4QUHGD3IG",
+      "status": "active",
+      "custom_group": "مشاور ارشد",
+      "grade": "پزشکی",
+      "invite_code": "KAZEMI",
+      "commission_percent": 60
+    },
+    {
+      "id": 4,
+      "workspace_id": 1,
+      "role": "advisor",
+      "full_name": "خانم دکتر سعیدی",
+      "phone_number": "09120000005",
+      "password_hash": "$2b$10$C77HXWQJZniC0qLGagESqO0NTINeendNXlQspk9e5g0h4QUHGD3IG",
+      "status": "active",
+      "custom_group": "مشاور تخصصی",
+      "grade": "دندانپزشکی",
+      "invite_code": "SAEEDI",
+      "commission_percent": 65
+    },
+    {
+      "id": 5,
+      "workspace_id": 1,
+      "role": "student",
+      "full_name": "یاشا محبی",
+      "phone_number": "09120000004",
+      "password_hash": "$2b$10$C77HXWQJZniC0qLGagESqO0NTINeendNXlQspk9e5g0h4QUHGD3IG",
+      "status": "active",
+      "custom_group": "VIP",
+      "grade": "دوازدهم تجربی",
+      "advisor_id": 3,
+      "taraz": 7120,
+      "subscription_status": "unpaid",
+      "grace_until": null,
+      "subscription_expires_at": null,
+      "tuition_fee": 3500000,
+      "payment_status": "paid",
+      "payment_link_token": "pay_5_nvye38"
+    },
+    {
+      "id": 6,
+      "workspace_id": 1,
+      "role": "student",
+      "full_name": "سارا امینی",
+      "phone_number": "09120000006",
+      "password_hash": "$2b$10$C77HXWQJZniC0qLGagESqO0NTINeendNXlQspk9e5g0h4QUHGD3IG",
+      "status": "active",
+      "custom_group": "عادی",
+      "grade": "دوازدهم تجربی",
+      "advisor_id": 3,
+      "taraz": 6850,
+      "subscription_status": "paid",
+      "tuition_fee": 2800000,
+      "payment_status": "pending",
+      "payment_link_token": "pay_6_539jrm"
+    },
+    {
+      "id": 7,
+      "workspace_id": 1,
+      "role": "student",
+      "full_name": "آریا صبوری",
+      "phone_number": "09120000007",
+      "password_hash": "$2b$10$C77HXWQJZniC0qLGagESqO0NTINeendNXlQspk9e5g0h4QUHGD3IG",
+      "status": "active",
+      "custom_group": "عادی",
+      "grade": "یازدهم تجربی",
+      "advisor_id": 3,
+      "taraz": 6400,
+      "subscription_status": "paid",
+      "tuition_fee": 3200000,
+      "payment_status": "paid",
+      "payment_link_token": "pay_7_n3vkij"
+    },
+    {
+      "id": 8,
+      "workspace_id": 1,
+      "role": "student",
+      "full_name": "نغمه شمس",
+      "phone_number": "09120000008",
+      "password_hash": "$2b$10$C77HXWQJZniC0qLGagESqO0NTINeendNXlQspk9e5g0h4QUHGD3IG",
+      "status": "active",
+      "custom_group": "VIP",
+      "grade": "دوازدهم تجربی",
+      "advisor_id": 4,
+      "taraz": 6980,
+      "subscription_status": "paid",
+      "tuition_fee": 4000000,
+      "payment_status": "overdue",
+      "payment_link_token": "pay_8_o8r3bh"
+    },
+    {
+      "id": 9,
+      "workspace_id": 1,
+      "role": "student",
+      "full_name": "امیرحسین مرادی",
+      "phone_number": "09129990001",
+      "password_hash": "$2b$10$C77HXWQJZniC0qLGagESqO0NTINeendNXlQspk9e5g0h4QUHGD3IG",
+      "status": "active",
+      "custom_group": "ثبت‌نام جدید (در انتظار تایید)",
+      "grade": "دوازدهم تجربی",
+      "advisor_id": null,
+      "created_at": "۱۴۰۵/۰۸/۰۲ ۱۰:۱۵",
+      "subscription_status": "paid",
+      "tuition_fee": 4000000,
+      "payment_status": "paid",
+      "payment_link_token": "pay_9_trj56t"
+    },
+    {
+      "id": 10,
+      "workspace_id": 1,
+      "role": "student",
+      "full_name": "مهسا علیزاده",
+      "phone_number": "09129990002",
+      "password_hash": "$2b$10$C77HXWQJZniC0qLGagESqO0NTINeendNXlQspk9e5g0h4QUHGD3IG",
+      "status": "active",
+      "custom_group": "ثبت‌نام جدید (در انتظار تایید)",
+      "grade": "یازدهم ریاضی",
+      "advisor_id": null,
+      "created_at": "۱۴۰۵/۰۸/۰۳ ۱۶:۴۰",
+      "subscription_status": "paid",
+      "tuition_fee": 4000000,
+      "payment_status": "paid",
+      "payment_link_token": "pay_10_9tkt4"
+    },
+    {
+      "id": 11,
+      "workspace_id": 1,
+      "role": "student",
+      "full_name": "آرمان رستمی",
+      "phone_number": "09350001122",
+      "password_hash": "$2b$10$Tokj3OX8driicz3NDgz0LuVOBERvQ5jcTnSdrHj4QL//.3eohcs.G",
+      "custom_group": "عادی",
+      "grade": "دوازدهم تجربی",
+      "advisor_id": 3,
+      "status": "active",
+      "created_at": "۱۴۰۵/۸/۴, ۹:۲۶:۴۷",
+      "subscription_status": "paid",
+      "tuition_fee": 4000000,
+      "payment_status": "paid",
+      "payment_link_token": "pay_11_dai9us"
+    },
+    {
+      "id": 12,
+      "workspace_id": 1,
+      "role": "student",
+      "full_name": "آرشام رضوی",
+      "phone_number": "09128881234",
+      "password_hash": "$2b$10$d9YIIf/A0IqhTWaMLv0znO0ZqBz0Km5GRHa5kJ1wQUGpIRrSFmW0O",
+      "custom_group": "شاگرد مستقیم (لینک دعوت)",
+      "grade": "دوازدهم",
+      "advisor_id": 3,
+      "onboarded": false,
+      "status": "active",
+      "created_at": "۱۴۰۵/۸/۴, ۱۳:۵۸:۴۰",
+      "subscription_status": "paid",
+      "tuition_fee": 4000000,
+      "payment_status": "paid",
+      "payment_link_token": "pay_12_1vo0iw"
+    },
+    {
+      "id": 20,
+      "workspace_id": 1,
+      "role": "parent",
+      "full_name": "آقای محبی (ولی یاشا)",
+      "phone_number": "09120000099",
+      "password_hash": "$2b$10$VqGcipwSPmbDfMfX.lSkEOGSj6.Ptm88yJrSg5q0fkX5Yfcj2k2KC",
+      "status": "active",
+      "custom_group": "اولیا",
+      "grade": "اولیا",
+      "student_id": 5,
+      "child_name": "یاشا محبی",
+      "onboarded": true
+    },
+    {
+      "id": 30,
+      "workspace_id": 1,
+      "role": "advisor",
+      "full_name": "دکتر رضایی (مشاور ارشد مدولا سمنان)",
+      "phone_number": "09100341562",
+      "password_hash": "$2b$10$lTicNOxYd2J2AZa76gbgoeavrXnj5RdtLrwWNHxl9YofQlRDm3dCW",
+      "status": "active",
+      "custom_group": "مشاور ارشد سمنان",
+      "grade": "هدایت تحصیلی و کنکور",
+      "invite_code": "MEDULLA",
+      "commission_percent": 60
+    },
+    {
+      "id": 31,
+      "workspace_id": 1,
+      "role": "student",
+      "full_name": "دانش‌آموز اول (رشته تجربی - سمنان)",
+      "phone_number": "09100341563",
+      "password_hash": "$2b$10$lTicNOxYd2J2AZa76gbgoeavrXnj5RdtLrwWNHxl9YofQlRDm3dCW",
+      "status": "active",
+      "custom_group": "VIP کنکور ۱۴۰۵",
+      "grade": "دوازدهم تجربی",
+      "advisor_id": 30,
+      "taraz": 7150,
+      "onboarded": true,
+      "subscription_status": "paid",
+      "subscription_expires_at": "2026-11-28T15:04:42.502Z",
+      "parent_phone": "09100341569",
+      "school_name": "دبیرستان شهید بهشتی سمنان",
+      "target_field": "پزشکی دانشگاه تهران",
+      "tuition_fee": 4000000,
+      "payment_status": "paid",
+      "payment_link_token": "pay_31_nh3loq"
+    },
+    {
+      "id": 32,
+      "workspace_id": 1,
+      "role": "student",
+      "full_name": "دانش‌آموز دوم (رشته ریاضی - سمنان)",
+      "phone_number": "09100341564",
+      "password_hash": "$2b$10$lTicNOxYd2J2AZa76gbgoeavrXnj5RdtLrwWNHxl9YofQlRDm3dCW",
+      "status": "active",
+      "custom_group": "VIP کنکور ۱۴۰۵",
+      "grade": "دوازدهم ریاضی",
+      "advisor_id": 30,
+      "taraz": 6920,
+      "onboarded": true,
+      "subscription_status": "paid",
+      "subscription_expires_at": "2026-11-28T15:04:42.502Z",
+      "parent_phone": "09100341568",
+      "school_name": "دبیرستان نمونه دولتی سمنان",
+      "target_field": "مهندسی کامپیوتر دانشگاه شریف",
+      "tuition_fee": 4000000,
+      "payment_status": "paid",
+      "payment_link_token": "pay_32_pgxpv"
+    }
+  ],
+  "study_plans": [
+    {
+      "id": 1,
+      "student_id": 5,
+      "advisor_id": 3,
+      "start_date": "۱۴۰۵/۰۸/۰۱",
+      "end_date": "۱۴۰۵/۰۸/۰۷",
+      "plan_data": {
+        "شنبه": [
+          {
+            "title": "زیست‌شناسی دهم - گفتار ۲ و ۳ فصل گوارش",
+            "duration": 90,
+            "description": "مطالعه دقیق متن کتاب + حل ۴۰ تست آموزشی از منبع اول",
+            "isDone": true
+          },
+          {
+            "title": "شیمی یازدهم - استوکیومتری و سینتیک",
+            "duration": 75,
+            "description": "مرور فرمول‌های فرار + حل ۲۵ تست زمان‌دار",
+            "isDone": true
+          },
+          {
+            "title": "ریاضیات جامع - مبحث مشتق و کاربرد مشتق",
+            "duration": 90,
+            "description": "حل تست‌های کنکور داخل و خارج ۹۸ تا ۱۴۰۲",
+            "isDone": false
+          }
+        ],
+        "یکشنبه": [
+          {
+            "title": "فیزیک دوازدهم - حرکت‌شناسی و شتاب ثابت",
+            "duration": 90,
+            "description": "خلاصه‌نویسی نمودارهای مکان-زمان + ۳۰ تست",
+            "isDone": true
+          },
+          {
+            "title": "زیست دوازدهم - رونویسی و ترجمه ژنتیک",
+            "duration": 90,
+            "description": "بررسی تصاویر کتاب و دام‌های تستی",
+            "isDone": false
+          }
+        ],
+        "دوشنبه": [
+          {
+            "title": "شیمی دهم - ساختار اتم و جدول تناوبی",
+            "duration": 75,
+            "description": "حل تست‌های مضرب ۳ گاج نقره‌ای",
+            "isDone": false
+          },
+          {
+            "title": "ریاضیات - مثلثات و معادلات مثلثاتی",
+            "duration": 90,
+            "description": "رفع اشکال تست‌های غلط آزمون قلم‌چی",
+            "isDone": false
+          }
+        ],
+        "سه‌شنبه": [
+          {
+            "title": "زیست‌شناسی - فصل گردش مواد در بدن",
+            "duration": 90,
+            "description": "ترکیب نوار قلب با گردش خون لنفاوی",
+            "isDone": false
+          },
+          {
+            "title": "زمین‌شناسی - کانی‌ها و منابع معدنی",
+            "duration": 60,
+            "description": "حفظ کردن جدول نام کانی‌ها",
+            "isDone": false
+          }
+        ],
+        "چهارشنبه": [
+          {
+            "title": "فیزیک - نوسان و امواج مکانیکی",
+            "duration": 90,
+            "description": "فرمول‌های سرعت موج و تارهای صوتی",
+            "isDone": false
+          },
+          {
+            "title": "شیمی - محلول‌ها و غلظت مولار",
+            "duration": 75,
+            "description": "تمرین مسائل انحلال‌پذیری",
+            "isDone": false
+          }
+        ],
+        "پنجشنبه": [
+          {
+            "title": "شبیه‌سازی آزمونک جامع (پاسخبرگ ۲۰ سوالی)",
+            "duration": 60,
+            "description": "آزمون زمان‌دار جهت آمادگی جمعه",
+            "isDone": false
+          },
+          {
+            "title": "مرور کپسول‌های شبانه هفته",
+            "duration": 60,
+            "description": "خلاصه‌خوانی نکات علامت‌دار",
+            "isDone": false
+          }
+        ],
+        "جمعه": [
+          {
+            "title": "شرکت در آزمون آزمایشی ماز/قلم‌چی",
+            "duration": 210,
+            "description": "تحلیل دقیق تک تک سوالات پس از انتشار پاسخنامه تشریحی",
+            "isDone": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "student_id": 11,
+      "advisor_id": 3,
+      "start_date": "۱۴۰۵/۰۸/۱۰",
+      "end_date": "۱۴۰۵/۰۸/۱۶",
+      "plan_data": {
+        "شنبه": [
+          {
+            "title": "زیست دوازدهم",
+            "duration": 90,
+            "description": "فصل ۱ گفتار ۱",
+            "isDone": false
+          }
+        ]
+      },
+      "created_at": "2026-10-26T09:26:48.504Z"
+    },
+    {
+      "id": 31,
+      "student_id": 31,
+      "advisor_id": 30,
+      "start_date": "۱۴۰۵/۰۸/۰۱",
+      "end_date": "۱۴۰۵/۰۸/۰۷",
+      "plan_data": {
+        "شنبه": [
+          {
+            "title": "زیست‌شناسی دهم - فصل گوارش و جذب مواد",
+            "duration": 90,
+            "description": "مطالعه دقیق کتاب درسی و حل ۴۰ تست آموزشی",
+            "isDone": true,
+            "subject": "زیست"
+          },
+          {
+            "title": "شیمی یازدهم - استوکیومتری و آنتالپی",
+            "duration": 75,
+            "description": "حل تست‌های زمان‌دار کنکور ۱۴۰۰ به بعد",
+            "isDone": true,
+            "subject": "شیمی"
+          },
+          {
+            "title": "ریاضیات جامع - مشتق و کاربرد مشتق",
+            "duration": 90,
+            "description": "تحلیل تیپ‌های پرتکرار تستی",
+            "isDone": false,
+            "subject": "ریاضی"
+          }
+        ],
+        "یکشنبه": [
+          {
+            "title": "فیزیک دوازدهم - حرکت‌شناسی و شتاب ثابت",
+            "duration": 90,
+            "description": "بررسی نمودارهای مکان-زمان و سرعت-زمان",
+            "isDone": false,
+            "subject": "فیزیک"
+          },
+          {
+            "title": "زیست دوازدهم - ماده ژنتیک و همانندسازی",
+            "duration": 90,
+            "description": "بررسی تصاویر و نکات طلایی ترکیبی",
+            "isDone": false,
+            "subject": "زیست"
+          }
+        ],
+        "دوشنبه": [
+          {
+            "title": "شیمی دهم - ساختار اتم و جدول تناوبی",
+            "duration": 75,
+            "description": "حل تست‌های ترکیبی آرایش الکترونی",
+            "isDone": false,
+            "subject": "شیمی"
+          },
+          {
+            "title": "ریاضیات - مثلثات و معادلات زاویه‌ای",
+            "duration": 90,
+            "description": "مرور روابط مثلثاتی پایه یازدهم",
+            "isDone": false,
+            "subject": "ریاضی"
+          }
+        ],
+        "سه‌شنبه": [
+          {
+            "title": "زیست‌شناسی - گردش مواد و نوار قلب",
+            "duration": 90,
+            "description": "ترکیب ساختار قلب با انقباضات بطنی",
+            "isDone": false,
+            "subject": "زیست"
+          },
+          {
+            "title": "زمین‌شناسی / فیزیک پایه",
+            "duration": 60,
+            "description": "مرور نکات کلیدی مباحث خوانده‌شده",
+            "isDone": false,
+            "subject": "عمومی"
+          }
+        ],
+        "چهارشنبه": [
+          {
+            "title": "فیزیک - نوسان و امواج مکانیکی",
+            "duration": 90,
+            "description": "حل تست‌های نوسانگر وزنه و فنر",
+            "isDone": false,
+            "subject": "فیزیک"
+          },
+          {
+            "title": "شیمی - محلول‌ها و غلظت مولی",
+            "duration": 75,
+            "description": "مسائل درصد جرمی و انحلال‌پذیری",
+            "isDone": false,
+            "subject": "شیمی"
+          }
+        ],
+        "پنجشنبه": [
+          {
+            "title": "شبیه‌سازی آزمونک زمان‌دار جامع پایه",
+            "duration": 90,
+            "description": "حل آزمون ۵۰ سوالی زمان‌دار جهت آمادگی جمعه",
+            "isDone": false,
+            "subject": "تست"
+          },
+          {
+            "title": "مرور خلاصه‌ها و کپسول‌های شبانه",
+            "duration": 60,
+            "description": "مرور سبک خلاصه‌های هفته و خواب زودهنگام",
+            "isDone": false,
+            "subject": "مرور"
+          }
+        ],
+        "جمعه": [
+          {
+            "title": "شرکت در آزمون آزمایشی شبیه‌ساز ماز / قلم‌چی",
+            "duration": 210,
+            "description": "اجرای استراتژی زمان‌های نقصانی و مدیریت دفترچه",
+            "isDone": false,
+            "subject": "آزمون"
+          },
+          {
+            "title": "تحلیل تک تک سوالات و ثبت درصدهای کارنامه",
+            "duration": 120,
+            "description": "ارسال گزارش‌کار جامع هفته به مشاور در پنل مدولا",
+            "isDone": false,
+            "subject": "تحلیل"
+          }
+        ]
+      }
+    },
+    {
+      "id": 32,
+      "student_id": 32,
+      "advisor_id": 30,
+      "start_date": "۱۴۰۵/۰۸/۰۱",
+      "end_date": "۱۴۰۵/۰۸/۰۷",
+      "plan_data": {
+        "شنبه": [
+          {
+            "title": "زیست‌شناسی دهم - فصل گوارش و جذب مواد",
+            "duration": 90,
+            "description": "مطالعه دقیق کتاب درسی و حل ۴۰ تست آموزشی",
+            "isDone": true,
+            "subject": "زیست"
+          },
+          {
+            "title": "شیمی یازدهم - استوکیومتری و آنتالپی",
+            "duration": 75,
+            "description": "حل تست‌های زمان‌دار کنکور ۱۴۰۰ به بعد",
+            "isDone": true,
+            "subject": "شیمی"
+          },
+          {
+            "title": "ریاضیات جامع - مشتق و کاربرد مشتق",
+            "duration": 90,
+            "description": "تحلیل تیپ‌های پرتکرار تستی",
+            "isDone": false,
+            "subject": "ریاضی"
+          }
+        ],
+        "یکشنبه": [
+          {
+            "title": "فیزیک دوازدهم - حرکت‌شناسی و شتاب ثابت",
+            "duration": 90,
+            "description": "بررسی نمودارهای مکان-زمان و سرعت-زمان",
+            "isDone": false,
+            "subject": "فیزیک"
+          },
+          {
+            "title": "زیست دوازدهم - ماده ژنتیک و همانندسازی",
+            "duration": 90,
+            "description": "بررسی تصاویر و نکات طلایی ترکیبی",
+            "isDone": false,
+            "subject": "زیست"
+          }
+        ],
+        "دوشنبه": [
+          {
+            "title": "شیمی دهم - ساختار اتم و جدول تناوبی",
+            "duration": 75,
+            "description": "حل تست‌های ترکیبی آرایش الکترونی",
+            "isDone": false,
+            "subject": "شیمی"
+          },
+          {
+            "title": "ریاضیات - مثلثات و معادلات زاویه‌ای",
+            "duration": 90,
+            "description": "مرور روابط مثلثاتی پایه یازدهم",
+            "isDone": false,
+            "subject": "ریاضی"
+          }
+        ],
+        "سه‌شنبه": [
+          {
+            "title": "زیست‌شناسی - گردش مواد و نوار قلب",
+            "duration": 90,
+            "description": "ترکیب ساختار قلب با انقباضات بطنی",
+            "isDone": false,
+            "subject": "زیست"
+          },
+          {
+            "title": "زمین‌شناسی / فیزیک پایه",
+            "duration": 60,
+            "description": "مرور نکات کلیدی مباحث خوانده‌شده",
+            "isDone": false,
+            "subject": "عمومی"
+          }
+        ],
+        "چهارشنبه": [
+          {
+            "title": "فیزیک - نوسان و امواج مکانیکی",
+            "duration": 90,
+            "description": "حل تست‌های نوسانگر وزنه و فنر",
+            "isDone": false,
+            "subject": "فیزیک"
+          },
+          {
+            "title": "شیمی - محلول‌ها و غلظت مولی",
+            "duration": 75,
+            "description": "مسائل درصد جرمی و انحلال‌پذیری",
+            "isDone": false,
+            "subject": "شیمی"
+          }
+        ],
+        "پنجشنبه": [
+          {
+            "title": "شبیه‌سازی آزمونک زمان‌دار جامع پایه",
+            "duration": 90,
+            "description": "حل آزمون ۵۰ سوالی زمان‌دار جهت آمادگی جمعه",
+            "isDone": false,
+            "subject": "تست"
+          },
+          {
+            "title": "مرور خلاصه‌ها و کپسول‌های شبانه",
+            "duration": 60,
+            "description": "مرور سبک خلاصه‌های هفته و خواب زودهنگام",
+            "isDone": false,
+            "subject": "مرور"
+          }
+        ],
+        "جمعه": [
+          {
+            "title": "شرکت در آزمون آزمایشی شبیه‌ساز ماز / قلم‌چی",
+            "duration": 210,
+            "description": "اجرای استراتژی زمان‌های نقصانی و مدیریت دفترچه",
+            "isDone": false,
+            "subject": "آزمون"
+          },
+          {
+            "title": "تحلیل تک تک سوالات و ثبت درصدهای کارنامه",
+            "duration": 120,
+            "description": "ارسال گزارش‌کار جامع هفته به مشاور در پنل مدولا",
+            "isDone": false,
+            "subject": "تحلیل"
+          }
+        ]
+      }
+    }
+  ],
+  "work_reports": [
+    {
+      "id": 1,
+      "student_id": 5,
+      "report_date": "2026-10-24",
+      "total_study_time": 6.5,
+      "total_test_count": 120,
+      "report_items": {
+        "زیست‌شناسی": {
+          "time": 2.5,
+          "tests": 55
+        },
+        "شیمی": {
+          "time": 2,
+          "tests": 35
+        },
+        "فیزیک": {
+          "time": 2,
+          "tests": 30
+        }
+      },
+      "student_note": "کپسول مرور:\nنکته تست ۱۰ زیست: لنفوسیت T در تیموس بالغ می‌شود.\nنکته شیمی: آنتالپی پیوند همیشه مثبت است.",
+      "is_read_by_advisor": true,
+      "created_at": "2026-10-24 22:30:00"
+    },
+    {
+      "id": 2,
+      "student_id": 5,
+      "report_date": "2026-10-25",
+      "total_study_time": 7,
+      "total_test_count": 145,
+      "report_items": {
+        "زیست‌شناسی": {
+          "time": 3,
+          "tests": 70
+        },
+        "ریاضیات": {
+          "time": 2,
+          "tests": 40
+        },
+        "شیمی": {
+          "time": 2,
+          "tests": 35
+        }
+      },
+      "student_note": "تست‌های زمان‌دار زیست رو با درصد ۸۱٪ زدم.",
+      "is_read_by_advisor": false,
+      "created_at": "2026-10-25 21:00:00"
+    },
+    {
+      "id": 3,
+      "student_id": 6,
+      "report_date": "2026-10-23",
+      "total_study_time": 5,
+      "total_test_count": 80,
+      "report_items": {
+        "زیست‌شناسی": {
+          "time": 2.5,
+          "tests": 45
+        },
+        "شیمی": {
+          "time": 2.5,
+          "tests": 35
+        }
+      },
+      "student_note": "امروز کمی خسته بودم ولی به برنامه رسیدم.",
+      "is_read_by_advisor": true,
+      "created_at": "2026-10-23 20:30:00"
+    },
+    {
+      "id": 4,
+      "student_id": 11,
+      "report_date": "2026-10-26",
+      "total_study_time": 4.5,
+      "total_test_count": 85,
+      "report_items": {
+        "زیست‌شناسی": {
+          "time": 2.5,
+          "tests": 50
+        },
+        "شیمی": {
+          "time": 2,
+          "tests": 35
+        }
+      },
+      "student_note": "کپسول مرور:\nنکته تست زیست ۱۲",
+      "is_read_by_advisor": true,
+      "created_at": "2026-10-26T09:26:48.512Z"
+    },
+    {
+      "id": 5,
+      "student_id": 5,
+      "report_date": "2026-10-27",
+      "total_study_time": 7.5,
+      "total_test_count": 150,
+      "report_items": {
+        "زیست‌شناسی": {
+          "time": 3.5,
+          "tests": 80
+        },
+        "شیمی": {
+          "time": 4,
+          "tests": 70
+        }
+      },
+      "student_note": "تست ارسال در حالت قطع اینترنت و همگام‌سازی ابری خودکار",
+      "is_read_by_advisor": false,
+      "synced_from_offline": true,
+      "created_at": "2026-10-28T11:19:51.272Z"
+    }
+  ],
+  "advisor_events": [
+    {
+      "id": 1,
+      "advisor_id": 3,
+      "student_id": 5,
+      "advisor_name": "دکتر کاظمی",
+      "student_name": "یاشا محبی",
+      "event_date": "۱۴۰۵/۰۸/۰۴",
+      "event_time": "۱۸:۳۰",
+      "title": "تماس تلفنی بررسی کارنامه ماز یاشا محبی",
+      "event_type": "call",
+      "notes": "بررسی درصد زیست (۷۸٪) و شیمی (۶۵٪)، توصیه به افزایش تست زمان‌دار"
+    },
+    {
+      "id": 2,
+      "advisor_id": 3,
+      "student_id": 5,
+      "advisor_name": "دکتر کاظمی",
+      "student_name": "یاشا محبی",
+      "event_date": "۱۴۰۵/۰۸/۰۱",
+      "event_time": "۱۶:۰۰",
+      "title": "جلسه حضوری در دفتر موسسه - تنظیم برنامه هفتگی",
+      "event_type": "meeting",
+      "notes": "بررسی منابع دور دوم و هماهنگی برای آزمون قلم‌چی جمعه"
+    },
+    {
+      "id": 3,
+      "advisor_id": 3,
+      "student_id": 6,
+      "advisor_name": "دکتر کاظمی",
+      "student_name": "سارا امینی",
+      "event_date": "۱۴۰۵/۰۸/۰۵",
+      "event_time": "۱۹:۰۰",
+      "title": "تماس تلفنی رفع اشکال شیمی با سارا امینی",
+      "event_type": "call",
+      "notes": "حل ابهام در استوکیومتری یازدهم و مسائل درصد خلوص"
+    },
+    {
+      "id": 4,
+      "advisor_id": 3,
+      "student_id": 7,
+      "advisor_name": "دکتر کاظمی",
+      "student_name": "آریا صبوری",
+      "event_date": "۱۴۰۵/۰۸/۰۲",
+      "event_time": "۱۷:۱۵",
+      "title": "جلسه حضوری پیگیری عدم ارسال گزارش کار",
+      "event_type": "meeting",
+      "notes": "بررسی دلایل افت ساعت مطالعه و تنظیم تایم پومودورو"
+    },
+    {
+      "id": 5,
+      "advisor_id": 4,
+      "student_id": 8,
+      "advisor_name": "خانم دکتر سعیدی",
+      "student_name": "نغمه شمس",
+      "event_date": "۱۴۰۵/۰۸/۰۳",
+      "event_time": "۱۸:۰۰",
+      "title": "تماس تلفنی انگیزشی و برنامه‌ریزی جمع‌بندی مبحثی",
+      "event_type": "call",
+      "notes": "افزایش ساعات مطالعه زیست‌شناسی و تمرین آزمون‌های شبیه‌ساز"
+    }
+  ],
+  "platform_settings": {
+    "student_fee": 490000,
+    "card_number": "6219861408052453",
+    "card_holder": "سجاد حامدی",
+    "bank_name": "بانک سامان"
+  },
+  "payments": [
+    {
+      "id": 1,
+      "student_id": 6,
+      "student_name": "سارا امینی",
+      "student_phone": "09120000006",
+      "amount": 490000,
+      "method": "card_to_card",
+      "status": "pending",
+      "tracking_code": "TRX-9842105",
+      "receipt_image": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80",
+      "submitted_at": "2026-10-27T16:12:56.308Z",
+      "grace_until": "2026-10-28T16:12:56.308Z",
+      "notes": "واریز کارت به کارت شتابی"
+    },
+    {
+      "id": 2,
+      "student_id": 5,
+      "student_name": "یاشا محبی",
+      "student_phone": "09120000004",
+      "amount": 490000,
+      "method": "card_to_card",
+      "status": "pending",
+      "tracking_code": "TRX-TEST-123456",
+      "receipt_image": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80",
+      "submitted_at": "2026-10-27T20:13:19.351Z",
+      "grace_until": "2026-10-28T20:13:19.351Z",
+      "approved_at": null,
+      "notes": "تست واریز کارت به کارت"
+    }
+  ],
+  "accounting_integrations": {
+    "holo": {
+      "enabled": true,
+      "server_url": "https://api.holo-erp.ir/v2",
+      "api_key": "HOLO-ACAD-8849-MENTORA",
+      "database_name": "HOLO_HADAF_1405",
+      "last_sync": "۱۴۰۵/۰۸/۰۵ ۱۰:۳۰",
+      "status": "connected"
+    },
+    "sepidar": {
+      "enabled": true,
+      "api_token": "SEP-7731-0982-XYZ",
+      "branch_code": "104",
+      "customer_ledger_code": "401020",
+      "last_sync": "۱۴۰۵/۰۸/۰۴ ۱۶:۴۵",
+      "status": "connected"
+    },
+    "gateway": {
+      "provider": "زرین‌پال (ZarinPal)",
+      "merchant_id": "zrn-4491-0023-9912",
+      "auto_settlement": true
+    },
+    "webhook": {
+      "enabled": true,
+      "url": "https://my-academy.ir/api/accounting/webhook",
+      "secret": "whsec_99418240182490182",
+      "events": [
+        "واریز شهریه مشاوره",
+        "تسویه سهم مشاور",
+        "ثبت‌نام جدید دانش‌آموز"
+      ]
+    }
+  }
+}

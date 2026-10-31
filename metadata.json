@@ -1,0 +1,6 @@
+{
+  "name": "منتورا | Mentora - پلتفرم جامع مشاوره و مدیریت آکادمی",
+  "description": "سامانه یکپارچه مشاوره تحصیلی، اتصال مشاور به دانش‌آموز، مدیریت آموزشگاه‌ها و نظارت مالی موسسات",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

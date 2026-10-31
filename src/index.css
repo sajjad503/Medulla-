@@ -1,0 +1,6 @@
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/shabnam-font@v5.0.1/dist/font-face.css');
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap');
+@import "tailwindcss";
+@import "./App.css";
+
+@custom-variant dark (&:where(.dark, .dark *));

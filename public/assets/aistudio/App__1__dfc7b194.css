@@ -1,0 +1,420 @@
+/* ۱. فراخوانی فونت شبنم (برای تیترها و UI) از سرور ابری */
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/shabnam-font@v5.0.1/dist/font-face.css');
+
+/* ۲. فراخوانی فونت وزیرمتن (برای متن‌های طولانی و اعداد) از گوگل */
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap');
+
+/* ۳. تعریف متغیرهای گلوبال فونت */
+:root {
+  /* فونت اصلی برای تیترها، دکمه‌ها و قالب کلی سایت */
+  --font-primary: 'Shabnam', 'Vazirmatn', Tahoma, sans-serif;
+  
+  /* فونت ثانویه برای متن‌های طولانی، جداول و اعداد */
+  --font-secondary: 'Vazirmatn', Tahoma, sans-serif;
+}
+
+/* ۴. اعمال فونت روی کل سایت */
+* {
+  font-family: var(--font-primary);
+}
+
+body {
+  font-family: var(--font-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ۵. جلوگیری از تغییر فونت پیش‌فرض مرورگر در فرم‌ها و دکمه‌ها */
+input, textarea, button, select {
+  font-family: var(--font-primary);
+}
+
+/* ۶. استفاده از وزیرمتن برای کلاس‌های خاص، پاراگراف‌ها و جداول */
+.mono-num, 
+.text-muted, 
+p, 
+td, 
+th {
+  font-family: var(--font-secondary);
+}
+
+/* ۷. تیترها همیشه با فونت شبنم و ضخیم */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-primary);
+  font-weight: bold;
+}
+/* =========================================================
+   سیستم طراحی جامع پلتفرم منتورا (MENTORA DESIGN SYSTEM)
+   پالت ۳ رنگ اصلی: عاجی گرم، سرمه‌ای عمیق، طلایی شامپاینی
+========================================================= */
+
+:root {
+  /* رنگ‌های پایه برند منتورا */
+  --ivory: #FDFBF7;
+  --bg-main: #FDFBF7;
+  --bg-panel: #FFFFFF;
+
+  --navy-base: #0C1D3F;
+  --navy-secondary: #1B3366;
+  --primary: #0C1D3F;
+
+  --gold: #E6C287;
+  --gold-dark: #C5A880;
+  --gold-base: #C5A880;
+
+  /* کانال‌های آلفا (شفافیت‌ها) و بوردرهای خطی */
+  --navy-light: rgba(12, 29, 63, 0.15);
+  --navy-ghost: rgba(12, 29, 63, 0.04);
+  --gold-ghost: rgba(230, 194, 135, 0.12);
+  --border-color: rgba(12, 29, 63, 0.12);
+  --hover-bg: rgba(230, 194, 135, 0.08);
+
+  /* تایپوگرافی */
+  --text-main: #0C1D3F;
+  --text-muted: rgba(12, 29, 63, 0.6);
+
+  /* رنگ‌های وضعیت (کنترل شده در دل پالت) */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-main);
+  /* پترن نقطه‌ای ظریف سرمه‌ای با شفافیت ۳٪ روی پس‌زمینه عاجی */
+  background-image: radial-gradient(rgba(12, 29, 63, 0.035) 1px, transparent 1px);
+  background-size: 20px 20px;
+  color: var(--text-main);
+  font-family: 'MyCustomFont', Tahoma, sans-serif;
+  direction: rtl;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================================================
+   اسکرول‌بار سفارشی ظریف (سرمه‌ای و طلایی)
+========================================================= */
+::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(12, 29, 63, 0.04);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(197, 168, 128, 0.7);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--navy-base);
+}
+
+/* =========================================================
+   کلاس‌های تایپوگرافی و اعداد تک‌فضا (Monospace Numbers)
+========================================================= */
+.mono-num {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  color: var(--gold-dark);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+/* =========================================================
+   چیدمان شبکه‌ای کارت‌ها (Bento / Line-Art Cards)
+   بدون سایه مشکی - فقط سایه سرمه‌ای محو
+========================================================= */
+.panel,
+.bento-card {
+  background: var(--ivory);
+  border: 1px solid var(--navy-light);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(12, 29, 63, 0.05);
+  transition: all 0.25s ease;
+}
+
+.panel:hover,
+.bento-card:hover {
+  border-color: rgba(197, 168, 128, 0.65);
+  box-shadow: 0 12px 30px rgba(12, 29, 63, 0.09);
+}
+
+.panel-header {
+  font-weight: 900;
+  color: var(--navy-base);
+  font-size: 15px;
+  padding-bottom: 12px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid rgba(12, 29, 63, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* کارت‌های آماری داشبورد */
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  background: var(--ivory);
+  border: 1px solid var(--navy-light);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(12, 29, 63, 0.05);
+  transition: all 0.25s ease;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 900;
+  margin-top: 10px;
+  color: var(--navy-base);
+}
+
+/* =========================================================
+   دکمه‌ها، درخشش طلایی (Gold Glow) و لیبل‌های کپسولی (Pill Badges)
+========================================================= */
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-primary {
+  background: var(--navy-base);
+  color: var(--gold);
+  box-shadow: 0 6px 18px rgba(12, 29, 63, 0.18);
+}
+
+.btn-primary:hover {
+  background: var(--navy-secondary);
+  transform: translateY(-2px);
+}
+
+.gold-glow-btn {
+  background: linear-gradient(135deg, #E6C287 0%, #C5A880 100%);
+  color: var(--navy-base);
+  border: none;
+  box-shadow: 0 0 20px rgba(230, 194, 135, 0.5);
+  font-weight: 900;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.gold-glow-btn:hover {
+  box-shadow: 0 0 30px rgba(230, 194, 135, 0.85);
+  transform: translateY(-2px);
+}
+
+.pill-badge {
+  border-radius: 50px;
+  border: 1px solid rgba(12, 29, 63, 0.25);
+  background: transparent;
+  color: var(--navy-base);
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.pill-badge:hover {
+  background: rgba(12, 29, 63, 0.05);
+  border-color: var(--navy-base);
+}
+
+/* =========================================================
+   فیلدها، تول‌تیپ‌های تاریک و نوار پیشرفت باریک
+========================================================= */
+.input-box {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: 1px solid var(--navy-light);
+  background: var(--ivory);
+  color: var(--navy-base);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border 0.2s ease;
+}
+
+.input-box:focus {
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 0 3px rgba(230, 194, 135, 0.15);
+}
+
+.dark-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dark-tooltip .tooltip-box {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 130%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--navy-base);
+  color: var(--ivory);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 100;
+  transition: opacity 0.2s ease;
+  box-shadow: 0 6px 16px rgba(12, 29, 63, 0.25);
+  pointer-events: none;
+}
+
+.dark-tooltip:hover .tooltip-box {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* =========================================================
+   داک شناور پنل دانش‌آموز و مودال تکمیل پرونده
+========================================================= */
+.workspace {
+  flex: 1;
+  padding: 20px 35px 100px 35px;
+}
+
+.mac-dock {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(12, 29, 63, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(230, 194, 135, 0.35);
+  border-radius: 50px;
+  padding: 8px 16px;
+  display: flex;
+  gap: 10px;
+  box-shadow: 0 15px 35px rgba(12, 29, 63, 0.3);
+  z-index: 999;
+}
+
+.dock-item {
+  color: rgba(253, 251, 247, 0.6);
+  padding: 10px 16px;
+  border-radius: 40px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.dock-item:hover {
+  color: var(--ivory);
+  background: rgba(253, 251, 247, 0.08);
+}
+
+.dock-item.active {
+  background: linear-gradient(135deg, #E6C287 0%, #C5A880 100%);
+  color: var(--navy-base);
+  font-weight: 900;
+  box-shadow: 0 0 15px rgba(230, 194, 135, 0.4);
+}
+
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 29, 63, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.onboarding-box {
+  background: var(--ivory);
+  border: 1px solid var(--gold-dark);
+  border-radius: 16px;
+  padding: 35px;
+  width: 90%;
+  max-width: 650px;
+  box-shadow: 0 25px 60px rgba(12, 29, 63, 0.35);
+}
+
+/* =========================================================
+   انیمیشن‌ها و اسکلتون لودینگ طلایی (Shimmer)
+========================================================= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes goldShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-skeleton {
+  background: linear-gradient(90deg, #FDFBF7 25%, rgba(230, 194, 135, 0.2) 50%, #FDFBF7 75%);
+  background-size: 200% 100%;
+  animation: goldShimmer 2s infinite;
+  border-radius: 6px;
+}
+
+/* تنظیمات چاپ و خروجی PDF */
+@media print {
+  body * { visibility: hidden; }
+  #printable-plan-area, #printable-plan-area * { visibility: visible; }
+  #printable-plan-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    direction: rtl;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .no-print { display: none !important; }
+}
