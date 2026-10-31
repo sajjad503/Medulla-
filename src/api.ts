@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // در محیط توسعه AI Studio از آدرس نسبی (سرور محلی Express/Node) استفاده می‌کنیم تا خطای Network Error به خاطر عدم دسترسی به سرور خارجی لیارا رخ ندهد
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || '';
+const API_BASE_URL = 'https://mymedulla-backend.liara.run/';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
