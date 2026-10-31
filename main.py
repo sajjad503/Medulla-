@@ -307,3 +307,16 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     print(f"Starting Medulla Python server on port {port}...")
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
+    @app.get("/auth/founder/data")
+async def get_founder_dashboard_data():
+    # در آینده می‌توانی کوئری‌های دیتابیس MySQL را اینجا بنویسی تا آمار واقعی جایگزین شود
+    return {
+        "success": True,
+        "data": {
+            "total_students": 0,         # تعداد کل دانش‌آموزان
+            "total_advisors": 0,         # تعداد کل مشاوران
+            "active_plans": 0,           # برنامه‌های فعال
+            "platform_status": "Online"  # وضعیت سرور
+        },
+        "message": "اطلاعات کلان پلتفرم با موفقیت دریافت شد"
+    }
