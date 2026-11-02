@@ -18,6 +18,219 @@ import AdvisorStudentPlan from './AdvisorStudentPlan';
 import AdvisorStudentReport from './AdvisorStudentReport';
 import AdvisorStudentReportCards from './AdvisorStudentReportCards';
 import AdvisorStudentExams from './AdvisorStudentExams';
+import DailyPlanner from './DailyPlanner';
+
+function AdvisorParentMessenger({ student }: { student: any }) {
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [urgency, setUrgency] = useState<'normal' | 'urgent'>('normal');
+  const [sending, setSending] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+
+  useEffect(() => {
+    fetchMessages();
+  }, [student?.id]);
+
+  const fetchMessages = async () => {
+    if (!student?.id) return;
+    try {
+      setLoading(true);
+      const res = await api.get(`/records/advisor-parent-messages/${student.id}`);
+      setMessages(res.data || []);
+    } catch (_) {}
+    finally { setLoading(false); }
+  };
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!body.trim()) return alert('لطفاً متن پیام به اولیا را وارد نمایید.');
+    try {
+      setSending(true);
+      const res = await api.post('/records/advisor-message-to-parent', {
+        student_id: student.id,
+        title: title.trim() || `پیام مشاور تحصیلی به اولیای ${student.name}`,
+        message: body.trim(),
+        urgency
+      });
+      setSuccessMsg(res.data.message || 'پیام با موفقیت در پنل اولیا ثبت گردید ✅');
+      setTitle('');
+      setBody('');
+      fetchMessages();
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'خطا در ارسال پیام.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
+      <div className="bento-card" style={{ marginBottom: '20px', borderRight: '4px solid var(--gold)' }}>
+        <h3 style={{ margin: '0 0 6px 0', color: 'var(--primary)', fontSize: '17px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <MessageCircle size={18} color="var(--gold-dark)" />
+          ارسال پیام و توصیه رسمی به اولیای «{student.name}»
+        </h3>
+        <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>
+          این پیام مستقیماً در سامانه پایش والدین نمایش داده شده و جایگزین ارتباطات متفرقه و فرسایشی می‌گردد.
+        </p>
+
+        {successMsg && (
+          <div style={{
+            background: 'rgba(16, 185, 129, 0.15)',
+            border: '1px solid #10b981',
+            color: '#065f46',
+            padding: '10px 16px',
+            borderRadius: '10px',
+            marginTop: '14px',
+            fontSize: '13px',
+            fontWeight: 'bold'
+          }}>
+            {successMsg}
+          </div>
+        )}
+
+        <form onSubmit={handleSend} style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                موضوع پیام:
+              </label>
+              <input
+                type="text"
+                placeholder="مثلاً: گزارش پیشرفت هفتگی و وضعیت خواب"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-main)',
+                  color: 'var(--text-main)',
+                  fontSize: '13px'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                سطح فوریت:
+              </label>
+              <select
+                value={urgency}
+                onChange={(e: any) => setUrgency(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-main)',
+                  color: 'var(--text-main)',
+                  fontSize: '13px',
+                  fontWeight: 'bold'
+                }}
+              >
+                <option value="normal">توصیه و گزارش عادی تحصیلی</option>
+                <option value="urgent">فوری (افت تراز / نیاز به پیگیری سریع)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '5px' }}>
+              متن پیام و راهکارهای مشاور برای خانواده:
+            </label>
+            <textarea
+              rows={4}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="توصیه‌های آموزشی، بازخورد عملکرد آزمون و انتظارات از محیط خانواده را بنویسید..."
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: '10px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-main)',
+                color: 'var(--text-main)',
+                fontSize: '13px',
+                lineHeight: '1.8'
+              }}
+            />
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={sending}
+              style={{
+                background: 'var(--primary)',
+                color: 'var(--gold)',
+                border: '1px solid var(--gold)',
+                padding: '10px 24px',
+                borderRadius: '8px',
+                fontWeight: '900',
+                fontSize: '13px',
+                cursor: sending ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Send size={15} />
+              <span>{sending ? 'در حال ارسال به اولیا...' : 'ارسال به پنل اولیا'}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* لیست پیام‌های ارسال‌شده قبلی */}
+      <div className="bento-card">
+        <h3 style={{ margin: '0 0 14px 0', color: 'var(--primary)', fontSize: '15px', fontWeight: '900' }}>
+          تاریخچه پیام‌های ارسال‌شده به اولیای {student.name} ({messages.length} پیام)
+        </h3>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {messages.map(m => (
+            <div
+              key={m.id}
+              style={{
+                background: 'var(--bg-main)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '10px',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: 'bold', fontSize: '13px', color: 'var(--primary)' }}>{m.title}</span>
+                  <span className="pill-badge" style={{ fontSize: '10px', background: m.urgency === 'urgent' ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', color: m.urgency === 'urgent' ? '#ef4444' : '#10b981' }}>
+                    {m.urgency === 'urgent' ? 'فوری' : 'عادی'}
+                  </span>
+                </div>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{m.date}</span>
+              </div>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-main)', lineHeight: '1.8', whiteSpace: 'pre-line' }}>
+                {m.message}
+              </p>
+            </div>
+          ))}
+
+          {messages.length === 0 && !loading && (
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '12px' }}>
+              هنوز پیامی برای اولیای این دانش‌آموز ثبت نشده است.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function AdvisorDashboard() {
   const [studentsData, setStudentsData] = useState<any[]>([]);
@@ -260,7 +473,9 @@ export default function AdvisorDashboard() {
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {[
               { id: 'overview', label: 'نمای کلی (رادار)', icon: <Target size={14}/> },
+              { id: 'dailyplanner', label: 'پلنر زمانی روزانه', icon: <Clock size={14}/> },
               { id: 'plan', label: 'برنامه مطالعاتی هفتگی', icon: <CalendarClock size={14}/> },
+              { id: 'parentMessage', label: 'پیام به اولیا', icon: <MessageCircle size={14}/> },
               { id: 'report', label: 'ماتریس گزارش کارها', icon: <FileText size={14}/> },
               { id: 'reportCards', label: 'کارنامه‌ها و تحلیل', icon: <BarChart3 size={14}/> },
               { id: 'exams', label: 'طراحی آزمون و کوییز', icon: <Layers size={14}/> }
@@ -287,7 +502,17 @@ export default function AdvisorDashboard() {
                 onScheduleMeeting={(d: string, t: string, ty: string) => handleScheduleMeeting(selectedStudent.name, d, t, ty)} 
               />
             )}
+            {activeProfileTab === 'dailyplanner' && (
+              <DailyPlanner 
+                studentId={selectedStudent.id} 
+                studentName={selectedStudent.name} 
+                isAdvisorView={true} 
+              />
+            )}
             {activeProfileTab === 'plan' && <AdvisorStudentPlan studentName={selectedStudent.name} studentId={selectedStudent.id} />}
+            {activeProfileTab === 'parentMessage' && (
+              <AdvisorParentMessenger student={selectedStudent} />
+            )}
             {activeProfileTab === 'report' && <AdvisorStudentReport studentName={selectedStudent.name} studentId={selectedStudent.id} />}
             {activeProfileTab === 'reportCards' && <AdvisorStudentReportCards studentName={selectedStudent.name} studentId={selectedStudent.id} />}
             {activeProfileTab === 'exams' && <AdvisorStudentExams studentName={selectedStudent.name} studentId={selectedStudent.id} />}

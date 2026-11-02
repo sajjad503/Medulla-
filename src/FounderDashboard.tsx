@@ -9,9 +9,10 @@ import api from './api';
 
 interface FounderDashboardProps {
   onLogout: () => void;
+  onSwitchRole?: (role: string, phone: string) => void;
 }
 
-export default function FounderDashboard({ onLogout }: FounderDashboardProps) {
+export default function FounderDashboard({ onLogout, onSwitchRole }: FounderDashboardProps) {
   const [activeTab, setActiveTab] = useState<'finances' | 'institutes' | 'advisors' | 'students' | 'subscriptions'>('subscriptions');
   
   const [institutes, setInstitutes] = useState<any[]>([]);
@@ -187,6 +188,25 @@ export default function FounderDashboard({ onLogout }: FounderDashboardProps) {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {onSwitchRole && (
+            <button
+              onClick={() => onSwitchRole('manager', '09120000002')}
+              className="gold-glow-btn"
+              style={{
+                padding: '8px 14px',
+                borderRadius: '50px',
+                fontSize: '11px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer'
+              }}
+              title="ورود مستقیم به پنل مدیریت موسسه و آموزشگاه (آکادمی هدف)"
+            >
+              <Building size={14} /> پنل مدیر مؤسسه (آکادمی هدف)
+            </button>
+          )}
+
           <a
             href="/liara-mymedulla-backend.zip"
             download="liara-mymedulla-backend.zip"
@@ -755,7 +775,21 @@ export default function FounderDashboard({ onLogout }: FounderDashboardProps) {
       ========================================================= */}
       {activeTab === 'institutes' && (
         <div className="bento-card">
-          <h3 style={{ margin: '0 0 20px 0', color: '#0C1D3F', fontSize: '16px', fontWeight: '900' }}>موسسات و آکادمی‌های تحت قرارداد</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h3 style={{ margin: 0, color: '#0C1D3F', fontSize: '16px', fontWeight: '900' }}>موسسات و آکادمی‌های تحت قرارداد</h3>
+              <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'gray' }}>نظارت بر عملکرد مدیران آموزشگاه‌ها، صدور دسترسی و ورود مستقیم به میز کار هر آکادمی</p>
+            </div>
+            {onSwitchRole && (
+              <button
+                onClick={() => onSwitchRole('manager', '09120000002')}
+                className="gold-glow-btn"
+                style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <Building size={16} /> ورود به میز کار مدیر مؤسسه (آکادمی هدف)
+              </button>
+            )}
+          </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '13px' }}>
               <thead>

@@ -14,7 +14,7 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   
   // Login States
-  const [loginUsername, setLoginUsername] = useState('09120000001');
+  const [loginUsername, setLoginUsername] = useState('09910746198');
   const [loginPassword, setLoginPassword] = useState('123');
   
   // Register States
@@ -414,24 +414,31 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                   <button
                     type="button"
-                    onClick={() => quickDemoLogin('09100341561', 'مدیریت کل')}
+                    onClick={() => quickDemoLogin('09910746198', 'مدیریت کل')}
                     style={{ padding: '7px 8px', borderRadius: '6px', border: '1px solid #0C1D3F', background: '#0C1D3F', color: '#E6C287', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
                   >
-                    <Shield size={12} /> مدیر کل (09100341561)
+                    <Shield size={12} /> مدیر کل و صاحب پلتفرم (09910746198)
                   </button>
                   <button
                     type="button"
-                    onClick={() => quickDemoLogin('09100341562', 'مشاور ارشد')}
+                    onClick={() => quickDemoLogin('09120000002', 'مدیر مؤسسه')}
                     style={{ padding: '7px 8px', borderRadius: '6px', border: '1px solid #C5A880', background: 'rgba(230,194,135,0.2)', color: '#0C1D3F', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
                   >
-                    <Award size={12} /> مشاور (09100341562)
+                    <Building size={12} /> مدیر مؤسسات / آکادمی (09120000002)
                   </button>
                   <button
                     type="button"
-                    onClick={() => quickDemoLogin('09100341563', 'دانش‌آموز ۱ تجربی')}
+                    onClick={() => quickDemoLogin('09120000003', 'مشاور ارشد')}
+                    style={{ padding: '7px 8px', borderRadius: '6px', border: '1px solid #C5A880', background: 'rgba(230,194,135,0.1)', color: '#0C1D3F', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+                  >
+                    <Award size={12} /> مشاور ارشد (09120000003)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => quickDemoLogin('09120000004', 'دانش‌آموز ۱ تجربی')}
                     style={{ padding: '7px 8px', borderRadius: '6px', border: '1px solid rgba(12,29,63,0.2)', background: '#fff', color: '#0C1D3F', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
                   >
-                    <GraduationCap size={12} /> دانش‌آموز ۱ (09100341563)
+                    <GraduationCap size={12} /> دانش‌آموز ۱ (09120000004)
                   </button>
                   <button
                     type="button"
@@ -443,9 +450,9 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
                   <button
                     type="button"
                     onClick={() => quickDemoLogin('09120000099', 'اولیا (والدین)')}
-                    style={{ gridColumn: 'span 2', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--gold)', background: 'rgba(230,194,135,0.2)', color: '#0C1D3F', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+                    style={{ padding: '7px 8px', borderRadius: '6px', border: '1px solid var(--gold)', background: 'rgba(230,194,135,0.25)', color: '#0C1D3F', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
                   >
-                    <HeartHandshake size={13} color="#C5A880" /> پنل اولیا و ناظر تحصیلی
+                    <HeartHandshake size={13} color="#C5A880" /> پنل اولیا (09120000099)
                   </button>
                 </div>
               </div>

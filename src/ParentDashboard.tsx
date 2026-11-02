@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, Award, Calendar, Clock, BookOpen, CheckCircle2, AlertCircle, 
   PhoneCall, MessageSquare, TrendingUp, ShieldCheck, HeartHandshake,
-  FileText, Check, ChevronLeft, Sparkles, AlertTriangle, Send, Loader2
+  FileText, Check, ChevronLeft, Sparkles, AlertTriangle, Send, Loader2, Printer
 } from 'lucide-react';
 import api from './api';
 import { VoicePlayer } from './VoiceComponents';
@@ -14,14 +14,15 @@ interface ParentDashboardProps {
 
 export default function ParentDashboard({ onLogout }: ParentDashboardProps) {
   const [data, setData] = useState<any>(null);
+  const [advisorMessages, setAdvisorMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'plan' | 'reports' | 'exams' | 'advisor'>('overview');
-  const [parentMsg, setParentMsg] = useState('');
-  const [msgSent, setMsgSent] = useState(false);
   const [requestCallSuccess, setRequestCallSuccess] = useState(false);
+  const [showPrintPlanModal, setShowPrintPlanModal] = useState(false);
 
   useEffect(() => {
     fetchParentData();
+    fetchAdvisorMessages();
   }, []);
 
   const fetchParentData = async () => {
@@ -36,17 +37,25 @@ export default function ParentDashboard({ onLogout }: ParentDashboardProps) {
     }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!parentMsg.trim()) return;
-    setMsgSent(true);
-    setTimeout(() => {
-      setParentMsg('');
-      setMsgSent(false);
-    }, 4000);
+  const fetchAdvisorMessages = async () => {
+    try {
+      const res = await api.get('/records/parent-messages');
+      setAdvisorMessages(res.data || []);
+    } catch (err) {
+      console.warn('Could not load advisor messages:', err);
+    }
   };
 
-  const handleRequestCall = () => {
+  const handleRequestCall = async () => {
+    try {
+      await api.post('/records/events', {
+        student_id: data?.student?.id || 5,
+        title: `درخواست تماس تلفنی ولی ${data?.student?.name || 'یاشا محبی'} با مشاور`,
+        event_type: 'call',
+        event_date: new Date().toLocaleDateString('fa-IR'),
+        event_time: 'ساعات عصر'
+      });
+    } catch (_) {}
     setRequestCallSuccess(true);
     setTimeout(() => setRequestCallSuccess(false), 5000);
   };
@@ -131,7 +140,24 @@ export default function ParentDashboard({ onLogout }: ParentDashboardProps) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setShowPrintPlanModal(true)}
+            className="gold-glow-btn"
+            style={{
+              padding: '10px 18px',
+              borderRadius: '10px',
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            title="چاپ جدول برنامه هفتگی فرزند"
+          >
+            <Printer size={16} /> چاپ جدول برنامه
+          </button>
+
           <button
             onClick={handleRequestCall}
             style={{
@@ -234,11 +260,11 @@ export default function ParentDashboard({ onLogout }: ParentDashboardProps) {
       {/* تب‌های جابجایی در پنل اولیا */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', overflowX: 'auto' }}>
         {[
-          { id: 'overview', label: 'وضعیت کلی و پیام مشاور', icon: <Sparkles size={16} /> },
+          { id: 'overview', label: 'وضعیت کلی و تحلیل مشاور', icon: <Sparkles size={16} /> },
+          { id: 'advisor', label: `پیام‌ها و توصیه‌های مشاور (${advisorMessages.length})`, icon: <MessageSquare size={16} /> },
           { id: 'plan', label: 'جدول برنامه هفتگی فرزند', icon: <Calendar size={16} /> },
           { id: 'reports', label: 'ریز گزارش‌کار و ساعات مطالعه', icon: <FileText size={16} /> },
           { id: 'exams', label: 'کارنامه‌ها و تحلیل آزمون‌ها', icon: <Award size={16} /> },
-          { id: 'advisor', label: 'ارتباط مستقیم با مشاور', icon: <MessageSquare size={16} /> },
         ].map(tab => (
           <button
             key={tab.id}
@@ -487,74 +513,62 @@ export default function ParentDashboard({ onLogout }: ParentDashboardProps) {
         </div>
       )}
 
-      {/* تب ۴: ارتباط با مشاور */}
+      {/* تب ویژه: پیام‌ها و توصیه‌های مشاور به اولیا */}
       {activeTab === 'advisor' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
           
-          <div className="panel" style={{ margin: 0 }}>
-            <div className="panel-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MessageSquare size={20} color="var(--primary)" />
-              ارسال پیام مستقیم اولیا به مشاور
+          <div className="panel" style={{ margin: 0, border: '2px solid var(--gold)' }}>
+            <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)' }}>
+                <MessageSquare size={20} color="var(--gold-dark)" />
+                پیام‌ها و توصیه‌های ابلاغ‌شده توسط مشاور تحصیلی
+              </span>
+              <span className="pill-badge" style={{ fontSize: '11px', background: 'rgba(230,194,135,0.2)' }}>
+                {advisorMessages.length} پیام دریافت شده
+              </span>
             </div>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>
-              هرگونه سوال، نگرانی یا تغییر شرایط درسی یا خانوادگی فرزند را مستقیماً برای {advisor.name} ارسال کنید.
-            </p>
 
-            <form onSubmit={handleSendMessage} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <textarea
-                rows={4}
-                value={parentMsg}
-                onChange={(e) => setParentMsg(e.target.value)}
-                placeholder="متن پیام خود به مشاور را بنویسید (مثلاً: در مورد افت درصد شیمی یا تغییر ساعات خواب یاشا سوال دارم...)"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: '1.5px solid var(--border-color)',
-                  background: 'var(--bg-main)',
-                  color: 'var(--text-main)',
-                  fontSize: '13px',
-                  outline: 'none',
-                  resize: 'vertical'
-                }}
-              />
-              <button
-                type="submit"
-                style={{
-                  background: 'var(--primary)',
-                  color: 'var(--gold)',
-                  border: '1px solid var(--gold)',
-                  padding: '12px 20px',
-                  borderRadius: '10px',
-                  fontWeight: 'bold',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                <Send size={16} /> ارسال پیام به مشاور
-              </button>
-            </form>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '16px' }}>
+              {advisorMessages.map((msg: any) => (
+                <div
+                  key={msg.id}
+                  style={{
+                    background: 'var(--bg-main)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--primary)' }}>{msg.title}</span>
+                      <span className="pill-badge" style={{ fontSize: '10px', background: msg.urgency === 'urgent' ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', color: msg.urgency === 'urgent' ? '#ef4444' : '#10b981' }}>
+                        {msg.urgency === 'urgent' ? 'فوری' : 'توصیه تحصیلی'}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{msg.date}</span>
+                  </div>
 
-            {msgSent && (
-              <div style={{
-                marginTop: '12px',
-                padding: '10px',
-                borderRadius: '8px',
-                background: 'rgba(16, 185, 129, 0.1)',
-                color: '#10b981',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}>
-                <Check size={16} /> پیام شما با موفقیت برای مشاور ارسال شد.
-              </div>
-            )}
+                  <p style={{ margin: 0, fontSize: '13px', lineHeight: '1.9', color: 'var(--text-main)', whiteSpace: 'pre-line' }}>
+                    {msg.message}
+                  </p>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '8px', borderTop: '1px dashed var(--border-color)', fontSize: '11px', color: 'var(--text-muted)' }}>
+                    <span>ارسال‌کننده: <strong>{msg.advisor_name || advisor.name}</strong></span>
+                    <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <CheckCircle2 size={12} /> ابلاغ رسمی به اولیا
+                    </span>
+                  </div>
+                </div>
+              ))}
+
+              {advisorMessages.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', background: 'var(--bg-main)', borderRadius: '12px' }}>
+                  پیام جدیدی از مشاور در سامانه ثبت نشده است. کلیه توصیه‌ها به صورت هفتگی در اینجا درج می‌گردد.
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="panel" style={{ margin: 0 }}>
@@ -581,12 +595,13 @@ export default function ParentDashboard({ onLogout }: ParentDashboardProps) {
               </div>
 
               <button
+                type="button"
                 onClick={handleRequestCall}
                 style={{
-                  background: 'transparent',
-                  color: 'var(--primary)',
-                  border: '1.5px solid var(--primary)',
-                  padding: '10px',
+                  background: 'var(--primary)',
+                  color: 'var(--gold)',
+                  border: '1px solid var(--gold)',
+                  padding: '12px',
                   borderRadius: '10px',
                   fontWeight: 'bold',
                   fontSize: '13px',
@@ -598,11 +613,71 @@ export default function ParentDashboard({ onLogout }: ParentDashboardProps) {
                   marginTop: '8px'
                 }}
               >
-                <PhoneCall size={16} /> ثبت درخواست تماس در اولین زمان خالی
+                <PhoneCall size={16} /> ثبت درخواست تماس تلفنی در اولین زمان خالی
               </button>
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* مودال پیش‌نمایش چاپ جدول برنامه */}
+      {showPrintPlanModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(12, 29, 63, 0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 99999
+        }} onClick={() => setShowPrintPlanModal(false)}>
+          <div
+            className="bento-card"
+            style={{ width: '92%', maxWidth: '900px', maxHeight: '90vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, color: 'var(--primary)', fontSize: '18px', fontWeight: '900' }}>
+                پیش‌نمایش چاپ برنامه هفتگی ({student.name})
+              </h3>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  style={{
+                    background: 'var(--primary)',
+                    color: 'var(--gold)',
+                    border: '1px solid var(--gold)',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  پرینت مستقیم 🖨️
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPrintPlanModal(false)}
+                  style={{ background: 'transparent', border: '1px solid gray', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer' }}
+                >
+                  بستن
+                </button>
+              </div>
+            </div>
+            <WeeklyPlanTableView
+              studentName={student.name}
+              advisorName={advisor.name}
+              readOnly={true}
+              showExportButtons={false}
+            />
+          </div>
         </div>
       )}
 

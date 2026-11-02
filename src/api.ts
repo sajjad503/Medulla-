@@ -1,10 +1,19 @@
 import axios from 'axios';
 
-// در محیط توسعه AI Studio از آدرس نسبی (سرور محلی Express/Node) استفاده می‌کنیم تا خطای Network Error به خاطر عدم دسترسی به سرور خارجی لیارا رخ ندهد
-const API_BASE_URL = 'https://mymedulla-backend.liara.run/';
+// آدرس پایه API: در محیط سرور محلی یا هاست اشتراکی cPanel به صورت خودکار از مسیر نسبی استفاده می‌کند
+// اگر در فایل .env مقدار VITE_API_URL تعیین شده باشد از آن، وگرنه از آدرس جاری هاست استفاده می‌نماید
+const getBaseUrl = (): string => {
+  if (typeof window !== 'undefined' && (window as any).__MEDULLA_API_URL__) {
+    return (window as any).__MEDULLA_API_URL__;
+  }
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  return '';
+};
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getBaseUrl(),
   timeout: 20000,
   headers: {
     'Content-Type': 'application/json',

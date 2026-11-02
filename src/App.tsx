@@ -22,7 +22,7 @@ import AnswerSheet from './AnswerSheet';
 import Exams from './Exams';
 import ReportCard from './ReportCard';
 import FocusMode from './FocusMode';
-import FloatingToolkit from './FloatingToolkit';
+import DailyPlanner from './DailyPlanner';
 import { VoiceToastContainer } from './VoiceComponents';
 import StudentOnboardingModal from './StudentOnboardingModal';
 import NotificationCenter from './NotificationCenter';
@@ -42,7 +42,7 @@ const FallbackLoader = () => (
 export default function App() {
   const [userRole, setUserRole] = useState<string | null>(null); 
   const [unauthView, setUnauthView] = useState<'landing' | 'login'>('landing');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'plan' | 'workreport' | 'answersheet' | 'exams' | 'reports'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'plan' | 'dailyplanner' | 'workreport' | 'answersheet' | 'exams' | 'reports'>('dashboard');
   const [isOnboarded, setIsOnboarded] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
@@ -239,13 +239,13 @@ export default function App() {
 
   const handleLandingQuickRole = (role: string) => {
     const phoneMap: Record<string, string> = {
-      founder: '09100341561',
-      advisor: '09100341562',
-      student: '09100341563',
-      parent: '09120000099',
-      manager: '09120000002'
+      founder: '09910746198',
+      manager: '09120000002',
+      advisor: '09120000003',
+      student: '09120000004',
+      parent: '09120000099'
     };
-    switchRoleTo(role, phoneMap[role] || '09100341561');
+    switchRoleTo(role, phoneMap[role] || '09910746198');
   };
 
   const switchRoleTo = async (newRole: string, phone: string) => {
@@ -333,38 +333,45 @@ export default function App() {
           <span style={{ fontSize: '11px', color: 'var(--text-muted)', padding: '4px 8px', fontWeight: 'bold' }}>تغییر سریع سطح دسترسی:</span>
           
           <button 
-            onClick={() => switchRoleTo('founder', '09100341561')} 
+            onClick={() => switchRoleTo('founder', '09910746198')} 
             style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: userRole === 'founder' ? 'var(--primary)' : 'transparent', color: userRole === 'founder' ? 'var(--gold)' : 'var(--text-main)', cursor: 'pointer', textAlign: 'right', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <Shield size={14} color="#C5A880" /> ۱. مدیریت کل (09100341561)
+            <Shield size={14} color="#C5A880" /> ۱. مدیریت کل و مالک (09910746198)
           </button>
 
           <button 
-            onClick={() => switchRoleTo('advisor', '09100341562')} 
+            onClick={() => switchRoleTo('manager', '09120000002')} 
+            style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: userRole === 'manager' ? 'var(--primary)' : 'transparent', color: userRole === 'manager' ? 'var(--gold)' : 'var(--text-main)', cursor: 'pointer', textAlign: 'right', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Building size={14} color="#C5A880" /> ۲. مدیر مؤسسات / آکادمی (09120000002)
+          </button>
+
+          <button 
+            onClick={() => switchRoleTo('advisor', '09120000003')} 
             style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: userRole === 'advisor' ? 'var(--primary)' : 'transparent', color: userRole === 'advisor' ? 'var(--gold)' : 'var(--text-main)', cursor: 'pointer', textAlign: 'right', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <UserCheck size={14} color="#C5A880" /> ۲. پنل مشاور ارشد (09100341562)
+            <UserCheck size={14} color="#C5A880" /> ۳. پنل مشاور ارشد (09120000003)
           </button>
 
           <button 
-            onClick={() => switchRoleTo('student', '09100341563')} 
+            onClick={() => switchRoleTo('student', '09120000004')} 
             style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: userRole === 'student' ? 'var(--primary)' : 'transparent', color: userRole === 'student' ? 'var(--gold)' : 'var(--text-main)', cursor: 'pointer', textAlign: 'right', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <GraduationCap size={14} color="#C5A880" /> ۳. دانش‌آموز ۱ تجربی (09100341563)
+            <GraduationCap size={14} color="#C5A880" /> ۴. دانش‌آموز ۱ تجربی (09120000004)
           </button>
 
           <button 
             onClick={() => switchRoleTo('student', '09100341564')} 
             style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', textAlign: 'right', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <GraduationCap size={14} color="#C5A880" /> ۴. دانش‌آموز ۲ ریاضی (09100341564)
+            <GraduationCap size={14} color="#C5A880" /> ۵. دانش‌آموز ۲ ریاضی (09100341564)
           </button>
 
           <button 
             onClick={() => switchRoleTo('parent', '09120000099')} 
             style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: userRole === 'parent' ? 'var(--primary)' : 'transparent', color: userRole === 'parent' ? 'var(--gold)' : 'var(--text-main)', cursor: 'pointer', textAlign: 'right', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <HeartHandshake size={14} color="#C5A880" /> ۵. پنل اولیا (ناظر تحصیلی)
+            <HeartHandshake size={14} color="#C5A880" /> ۶. پنل اولیا (ناظر تحصیلی)
           </button>
 
           <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(230,194,135,0.3)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -443,7 +450,7 @@ export default function App() {
             </div>
           </header>
           <main className="app-main">
-            <FounderDashboard onLogout={handleLogout} />
+            <FounderDashboard onLogout={handleLogout} onSwitchRole={switchRoleTo} />
           </main>
         </div>
         
@@ -637,6 +644,7 @@ export default function App() {
           <nav className="mac-dock">
             <div className={"dock-item " + (activeTab === 'dashboard' ? 'active' : '')} onClick={() => setActiveTab('dashboard')}><LayoutDashboard size={20} /> داشبورد</div>
             <div className={"dock-item " + (activeTab === 'plan' ? 'active' : '')} onClick={() => setActiveTab('plan')}><CalendarDays size={20} /> برنامه</div> 
+            <div className={"dock-item " + (activeTab === 'dailyplanner' ? 'active' : '')} onClick={() => setActiveTab('dailyplanner')}><Clock size={20} /> پلنر روزانه</div>
             <div className={"dock-item " + (activeTab === 'workreport' ? 'active' : '')} onClick={() => setActiveTab('workreport')}><ClipboardList size={20} /> گزارش</div>
             <div className={"dock-item " + (activeTab === 'answersheet' ? 'active' : '')} onClick={() => setActiveTab('answersheet')}><FileText size={20} /> پاسخبرگ</div>
             <div className={"dock-item " + (activeTab === 'exams' ? 'active' : '')} onClick={() => setActiveTab('exams')}><FileQuestion size={20} /> آزمون</div>
@@ -646,13 +654,12 @@ export default function App() {
           <main className="workspace" style={{ paddingTop: '15px' }}>
             {activeTab === 'dashboard' && <Dashboard onNavigateTab={(tab) => setActiveTab(tab)} />}
             {activeTab === 'plan' && <StudyPlan />}
+            {activeTab === 'dailyplanner' && <DailyPlanner studentName={studentProfile?.name || 'یاشا محبی'} />}
             {activeTab === 'workreport' && <WorkReport />}
             {activeTab === 'answersheet' && <AnswerSheet />}
             {activeTab === 'exams' && <Exams />}
             {activeTab === 'reports' && <ReportCard />}
           </main>
-          
-          <FloatingToolkit />
         </div>
       )}
       <OfflineStatusBanner />

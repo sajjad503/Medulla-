@@ -66,7 +66,7 @@ const getInitialDb = () => {
       { id: 3, name: 'آکادمی نخبگان شریف', manager_id: 12, manager_name: 'مهندس کاویانی', phone: '09122222222', status: 'suspended', debt: 32000000, revenue: 38000000 }
     ],
     users: [
-      { id: 1, workspace_id: 1, role: 'founder', full_name: 'سجاد حامدی (مدیر کل مدولا)', phone_number: '09100341561', password_hash: hash, status: 'active', custom_group: 'مدیر ارشد', grade: 'سیستم' },
+      { id: 1, workspace_id: 1, role: 'founder', full_name: 'سجاد حامدی (مدیر کل و صاحب پلتفرم)', phone_number: '09910746198', password_hash: hash, status: 'active', custom_group: 'مدیر ارشد', grade: 'سیستم' },
       { id: 2, workspace_id: 1, role: 'manager', full_name: 'مهندس رضایی', phone_number: '09120000002', password_hash: hash, status: 'active', custom_group: 'مدیر آکادمی', grade: 'مدیریت' },
       { id: 3, workspace_id: 1, role: 'advisor', full_name: 'دکتر کاظمی', phone_number: '09120000003', password_hash: hash, status: 'active', custom_group: 'مشاور ارشد', grade: 'پزشکی', invite_code: 'KAZEMI' },
       { id: 4, workspace_id: 1, role: 'advisor', full_name: 'خانم دکتر سعیدی', phone_number: '09120000005', password_hash: hash, status: 'active', custom_group: 'مشاور تخصصی', grade: 'دندانپزشکی', invite_code: 'SAEEDI' },
@@ -1672,6 +1672,234 @@ recordsRouter.post('/events', authMiddleware, (req: AuthenticatedRequest, res: R
   db.advisor_events.push(newEvent);
   writeDb(db);
   return res.json({ message: 'رویداد در تقویم ذخیره شد ✅' });
+});
+
+// ==========================================
+// 📅 DAILY TIMELINE PLANNER ENDPOINTS
+// ==========================================
+
+// GET /records/daily-planner - Student fetches their own daily planner
+recordsRouter.get('/daily-planner', authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+  const studentId = req.user?.id || 5;
+  const targetDate = (req.query.date as string) || 'امروز';
+  const db = readDb();
+  if (!db.daily_planners) db.daily_planners = [];
+
+  const found = db.daily_planners.find((p: any) => p.student_id === studentId && (p.date === targetDate || (!p.date && targetDate === 'امروز')));
+  if (found) {
+    return res.json(found);
+  }
+
+  // Return a structured default planner if none exists yet
+  const defaultBlocks = [
+    { id: '1', startTime: '06:30', endTime: '07:15', category: 'meal', title: 'صبحانه مقوی و آماده‌سازی روزانه', durationMinutes: 45 },
+    { id: '2', startTime: '07:30', endTime: '10:30', category: 'class', title: 'کلاس آنلاین زیست‌شناسی دکتر عمارلو (فصل ژنتیک)', durationMinutes: 180 },
+    { id: '3', startTime: '10:45', endTime: '12:15', category: 'study', title: 'مطالعه خط به خط متن کتاب درسی و بررسی شکل‌ها', durationMinutes: 90 },
+    { id: '4', startTime: '12:15', endTime: '13:30', category: 'meal', title: 'ناهار، استراحت نیمروزی و نماز', durationMinutes: 75 },
+    { id: '5', startTime: '13:30', endTime: '15:30', category: 'test', title: 'حل ۵۰ تست زمان‌دار زیست و شیمی از کتاب جامع', durationMinutes: 120 },
+    { id: '6', startTime: '15:45', endTime: '17:15', category: 'class', title: 'کلاس مدرسه فیزیک (حرکت‌شناسی دوازدهم)', durationMinutes: 90 },
+    { id: '7', startTime: '17:30', endTime: '19:00', category: 'test', title: 'تست‌زنی فیزیک و رفع اشکال فرمول‌ها', durationMinutes: 90 },
+    { id: '8', startTime: '19:00', endTime: '20:00', category: 'personal_commute', title: 'پیاده‌روی سبک و استراحت با خانواده', durationMinutes: 60 },
+    { id: '9', startTime: '20:00', endTime: '21:00', category: 'meal', title: 'شام و استراحت', durationMinutes: 60 },
+    { id: '10', startTime: '21:00', endTime: '22:30', category: 'study', title: 'کپسول شبانه مرور لغات زبان و آرایه ادبی', durationMinutes: 90 },
+    { id: '11', startTime: '22:30', endTime: '06:30', category: 'sleep_rest', title: 'خواب شبانه منظم جهت آمادگی فردا', durationMinutes: 480 }
+  ];
+
+  return res.json({
+    student_id: studentId,
+    date: targetDate,
+    blocks: defaultBlocks,
+    summary: {
+      mealHours: 3.0,
+      classHours: 4.5,
+      testHours: 3.5,
+      studyHours: 3.0,
+      sleepRestHours: 8.0,
+      personalHours: 1.0,
+      totalProductiveHours: 6.5
+    },
+    advisor_review: 'تفکیک بازه‌های غذایی و استراحت از کلاس‌ها بسیار عالی انجام شده است.'
+  });
+});
+
+// POST /records/daily-planner - Student saves their daily time planner
+recordsRouter.post('/daily-planner', authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+  const studentId = req.user?.id || 5;
+  const { date, blocks, summary } = req.body;
+  const targetDate = date || 'امروز';
+  const db = readDb();
+  if (!db.daily_planners) db.daily_planners = [];
+
+  let planner = db.daily_planners.find((p: any) => p.student_id === studentId && p.date === targetDate);
+  if (planner) {
+    planner.blocks = blocks;
+    planner.summary = summary;
+    planner.updated_at = new Date().toISOString();
+  } else {
+    planner = {
+      id: db.daily_planners.length > 0 ? Math.max(...db.daily_planners.map((p: any) => p.id)) + 1 : 1,
+      student_id: studentId,
+      date: targetDate,
+      blocks: blocks || [],
+      summary: summary || {},
+      created_at: new Date().toISOString()
+    };
+    db.daily_planners.push(planner);
+  }
+
+  writeDb(db);
+  return res.json({ success: true, message: 'پلنر روزانه با موفقیت ذخیره شد و برای مشاور قابل مشاهده است ✅', planner });
+});
+
+// GET /records/student-daily-planner/:student_id - Advisor views any student's daily planner
+recordsRouter.get('/student-daily-planner/:student_id', authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+  const studentId = parseInt(req.params.student_id);
+  const targetDate = (req.query.date as string) || 'امروز';
+  const db = readDb();
+  if (!db.daily_planners) db.daily_planners = [];
+
+  const found = db.daily_planners.find((p: any) => p.student_id === studentId && (p.date === targetDate || (!p.date && targetDate === 'امروز')));
+  if (found) {
+    return res.json(found);
+  }
+
+  // Provide initial mock for advisor to inspect if empty
+  const sampleBlocks = [
+    { id: '1', startTime: '06:30', endTime: '07:15', category: 'meal', title: 'صبحانه مقوی و آماده‌سازی روزانه', durationMinutes: 45 },
+    { id: '2', startTime: '07:30', endTime: '10:30', category: 'class', title: 'کلاس آنلاین زیست‌شناسی (مبحث گوارش و گردش مواد)', durationMinutes: 180 },
+    { id: '3', startTime: '10:45', endTime: '12:15', category: 'study', title: 'مطالعه تشریحی متن کتاب و نکته‌برداری', durationMinutes: 90 },
+    { id: '4', startTime: '12:15', endTime: '13:30', category: 'meal', title: 'ناهار و استراحت', durationMinutes: 75 },
+    { id: '5', startTime: '13:30', endTime: '15:30', category: 'test', title: 'حل ۵۰ تست زمان‌دار شیمی و زیست', durationMinutes: 120 },
+    { id: '6', startTime: '15:45', endTime: '17:15', category: 'class', title: 'کلاس فیزیک مدرسه / ویدیو آموزشی', durationMinutes: 90 },
+    { id: '7', startTime: '17:30', endTime: '19:00', category: 'test', title: 'تست‌زنی فیزیک شتاب ثابت', durationMinutes: 90 },
+    { id: '8', startTime: '19:00', endTime: '20:00', category: 'personal_commute', title: 'استراحت و شام با خانواده', durationMinutes: 60 },
+    { id: '9', startTime: '20:00', endTime: '22:00', category: 'study', title: 'مرور کپسولی فرمول‌ها و خلاصه‌ها', durationMinutes: 120 },
+    { id: '10', startTime: '22:30', endTime: '06:30', category: 'sleep_rest', title: 'خواب شبانه استاندارد', durationMinutes: 480 }
+  ];
+
+  return res.json({
+    student_id: studentId,
+    date: targetDate,
+    blocks: sampleBlocks,
+    summary: {
+      mealHours: 2.5,
+      classHours: 4.5,
+      testHours: 3.5,
+      studyHours: 3.5,
+      sleepRestHours: 8.0,
+      personalHours: 1.0,
+      totalProductiveHours: 7.0
+    },
+    advisor_review: 'تعادل بین کلاس و تست‌زنی بسیار عالی است. توصیه می‌شود ناهار و استراحت ظهر بیش از ۱.۵ ساعت طول نکشد.'
+  });
+});
+
+// POST /records/daily-planner-review - Advisor leaves feedback on student's time planner
+recordsRouter.post('/daily-planner-review', authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+  const { student_id, date, review } = req.body;
+  const db = readDb();
+  if (!db.daily_planners) db.daily_planners = [];
+
+  let planner = db.daily_planners.find((p: any) => p.student_id === Number(student_id) && (p.date === date || (!p.date && date === 'امروز')));
+  if (planner) {
+    planner.advisor_review = review;
+    planner.reviewed_at = new Date().toISOString();
+  } else {
+    planner = {
+      id: db.daily_planners.length > 0 ? Math.max(...db.daily_planners.map((p: any) => p.id)) + 1 : 1,
+      student_id: Number(student_id),
+      date: date || 'امروز',
+      blocks: [],
+      summary: {},
+      advisor_review: review,
+      reviewed_at: new Date().toISOString()
+    };
+    db.daily_planners.push(planner);
+  }
+
+  writeDb(db);
+  return res.json({ success: true, message: 'بازخورد تحلیلی شما روی پلنر روزانه شاگرد ثبت شد ✅', planner });
+});
+
+// ==========================================
+// 💬 ADVISOR TO PARENT COMMUNICATION ENDPOINTS
+// ==========================================
+
+// POST /records/advisor-message-to-parent - Advisor sends a formal message to student's parents
+recordsRouter.post('/advisor-message-to-parent', authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+  if (req.user?.role !== 'advisor' && req.user?.role !== 'manager' && req.user?.role !== 'founder') {
+    return res.status(403).json({ detail: 'تنها مشاوران مجاز به ارسال پیام به اولیا می‌باشند.' });
+  }
+
+  const { student_id, title, message, urgency } = req.body;
+  if (!message || !message.trim()) {
+    return res.status(400).json({ detail: 'متن پیام نمی‌تواند خالی باشد.' });
+  }
+
+  const db = readDb();
+  if (!db.parent_messages) db.parent_messages = [];
+
+  const student = db.users.find((u: any) => u.id === Number(student_id));
+  const advisor = db.users.find((u: any) => u.id === req.user?.id);
+
+  const newMsg = {
+    id: db.parent_messages.length > 0 ? Math.max(...db.parent_messages.map((m: any) => m.id)) + 1 : 1,
+    advisor_id: req.user?.id,
+    advisor_name: advisor?.full_name || 'مشاور تحصیلی',
+    student_id: Number(student_id),
+    student_name: student?.full_name || 'دانش‌آموز',
+    date: new Date().toLocaleDateString('fa-IR'),
+    title: title || 'پیام و توصیه مشاور تحصیلی به اولیای گرامی',
+    message: message.trim(),
+    urgency: urgency || 'normal',
+    created_at: new Date().toISOString()
+  };
+
+  db.parent_messages.unshift(newMsg);
+  writeDb(db);
+
+  return res.json({
+    success: true,
+    message: `پیام شما با موفقیت در پنل اولیای ${newMsg.student_name} ثبت و ارسال شد ✅`,
+    data: newMsg
+  });
+});
+
+// GET /records/parent-messages - Parent retrieves all messages from their advisor
+recordsRouter.get('/parent-messages', (req: Request, res: Response) => {
+  const db = readDb();
+  if (!db.parent_messages) {
+    db.parent_messages = [
+      {
+        id: 1,
+        advisor_id: 3,
+        advisor_name: 'دکتر کاظمی',
+        student_id: 5,
+        student_name: 'یاشا محبی',
+        date: '۱۴۰۵/۰۸/۰۴',
+        title: 'گزارش پیشرفت هفتگی و توصیه‌های آموزشی برای اولیای گرامی',
+        message: 'با سلام و احترام خدمت اولیای محترم یاشا،\nروند مطالعه یاشا در هفته جاری بسیار پیوسته و باکیفیت بوده و تراز ۷۱۲۰ را در آزمون آزمایشی ثبت کرده است. برای حفظ این آمادگی، لطفاً در ساعات بعد از ۲۲:۰۰ شرایط آرامش و استراحت ایشان در منزل فراهم باشد تا از خستگی مفرط جلوگیری شود.',
+        urgency: 'normal',
+        created_at: new Date().toISOString()
+      }
+    ];
+    writeDb(db);
+  }
+
+  // Filter messages for student 5 (or target student)
+  const studentId = 5;
+  const msgs = db.parent_messages.filter((m: any) => m.student_id === studentId);
+  return res.json(msgs);
+});
+
+// GET /records/advisor-parent-messages/:student_id - Advisor retrieves message history with this student's parents
+recordsRouter.get('/advisor-parent-messages/:student_id', authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+  const studentId = parseInt(req.params.student_id);
+  const db = readDb();
+  if (!db.parent_messages) db.parent_messages = [];
+
+  const msgs = db.parent_messages.filter((m: any) => m.student_id === studentId);
+  return res.json(msgs);
 });
 
 // ==========================================

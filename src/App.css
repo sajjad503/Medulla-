@@ -37,26 +37,26 @@
 
 /* ۴. پالت حالت تیره اختصاصی مدولا (Dark Mode) - حفظ هویت لوکس سورمه‌ای و طلایی بدون خستگی چشم */
 html.dark, :root.dark {
-  --ivory: #0d1728;
-  --bg-main: #070e1b;
-  --bg-panel: #0d1728;
+  --ivory: #0f1c30;
+  --bg-main: #070d19;
+  --bg-panel: #111e35;
 
-  --navy-base: #142544;
-  --navy-secondary: #1e355c;
-  --primary: #E6C287;
+  --navy-base: #1b2f53;
+  --navy-secondary: #243c68;
+  --primary: #FDE047;
 
-  --gold: #E6C287;
-  --gold-dark: #C5A880;
-  --gold-base: #C5A880;
+  --gold: #FDE047;
+  --gold-dark: #E6C287;
+  --gold-base: #E6C287;
 
-  --navy-light: rgba(230, 194, 135, 0.2);
-  --navy-ghost: rgba(255, 255, 255, 0.05);
-  --gold-ghost: rgba(230, 194, 135, 0.15);
-  --border-color: rgba(230, 194, 135, 0.18);
-  --hover-bg: rgba(230, 194, 135, 0.08);
+  --navy-light: rgba(253, 224, 71, 0.25);
+  --navy-ghost: rgba(255, 255, 255, 0.08);
+  --gold-ghost: rgba(253, 224, 71, 0.18);
+  --border-color: rgba(253, 224, 71, 0.28);
+  --hover-bg: rgba(253, 224, 71, 0.12);
 
-  --text-main: #F1F5F9;
-  --text-muted: #94A3B8;
+  --text-main: #FFFFFF;
+  --text-muted: #CBD5E1;
 
   --success: #34D399;
   --warning: #FBBF24;

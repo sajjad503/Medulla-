@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Calendar, Copy, Trash2, Printer, Save, Plus, ChevronDown, FileText, Loader2, Check 
+  Calendar, Copy, Trash2, Printer, Save, Plus, ChevronDown, FileText, Loader2, Check,
+  Table, LayoutGrid, Eye
 } from 'lucide-react';
 import api from './api';
+import WeeklyPlanTableView from './WeeklyPlanTableView';
 
 function AutoGrowTextarea({ value, onChange, placeholder, style, onFocus, onBlur }: any) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -64,6 +66,8 @@ export default function AdvisorStudentPlan({ studentName = 'یاشا', studentId
 
   const [allSchedules, setAllSchedules] = useState<Record<string, Record<string, string>>>({});
   const [isLoadingPlan, setIsLoadingPlan] = useState(false);
+  const [viewMode, setViewMode] = useState<'matrix' | 'studentView'>('matrix');
+  const [serverPlanData, setServerPlanData] = useState<Record<string, any> | null>(null);
 
   useEffect(() => {
     fetchExistingPlan();
@@ -75,6 +79,7 @@ export default function AdvisorStudentPlan({ studentName = 'یاشا', studentId
       setIsLoadingPlan(true);
       const res = await api.get(`/records/student-plan/${studentId}`);
       if (res.data && res.data.plan_data && Object.keys(res.data.plan_data).length > 0) {
+        setServerPlanData(res.data.plan_data);
         const scheduleMap: Record<string, string> = {};
         Object.entries(res.data.plan_data).forEach(([day, boxes]: [string, any]) => {
           if (Array.isArray(boxes)) {
@@ -240,6 +245,53 @@ export default function AdvisorStudentPlan({ studentName = 'یاشا', studentId
     }, 300);
   };
 
+  const getFormattedPlanForView = () => {
+    const formatted: Record<string, any[]> = {};
+    daysOfWeek.forEach(day => {
+      const dayTasks: any[] = [];
+      planParts.forEach((part, pIdx) => {
+        const content = currentPlanCells[`${part.id}-${day}`];
+        if (content && content.trim()) {
+          const lines = content.trim().split('\n');
+          const title = lines[0];
+          const desc = lines.length > 1 ? lines.slice(1).join(' ') : content;
+          const testMatch = content.match(/(\d+)\s*تست/);
+          const testsCount = testMatch ? parseInt(testMatch[1], 10) : 30;
+          dayTasks.push({
+            id: `${day}-${part.id}`,
+            title: title,
+            duration: 90,
+            tests: testsCount,
+            description: desc,
+            shift: pIdx === 0 ? 'morning' : pIdx === 1 ? 'afternoon' : pIdx === 2 ? 'evening' : 'night',
+            isDone: false,
+            subject: part.name
+          });
+        }
+      });
+      if (currentPlanCells[`class-${day}`]) {
+        dayTasks.push({
+          id: `${day}-class`,
+          title: `کلاس آموزشی: ${currentPlanCells[`class-${day}`]}`,
+          duration: 120,
+          tests: 0,
+          description: currentPlanCells[`class-${day}`],
+          shift: 'afternoon',
+          isDone: false,
+          subject: 'کلاس'
+        });
+      }
+      if (dayTasks.length > 0) {
+        formatted[day] = dayTasks;
+      }
+    });
+
+    if (Object.keys(formatted).length > 0) {
+      return formatted;
+    }
+    return serverPlanData || undefined;
+  };
+
   const renderScheduleTable = (monthName: string, weekIdx: number, isReadOnly = false) => {
     const key = `${monthName}-${weekIdx}`;
     const cellsData = allSchedules[key] || {};
@@ -367,6 +419,61 @@ export default function AdvisorStudentPlan({ studentName = 'یاشا', studentId
   return (
     <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
       
+      {/* سوییچر حالت نمایش: ویرایشگر پارت‌ها / نمای تطبیقی دانش‌آموز */}
+      <div className="no-print bento-card" style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', background: 'linear-gradient(135deg, rgba(12, 29, 63, 0.04) 0%, rgba(230, 194, 135, 0.15) 100%)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '13px', fontWeight: '900', color: '#0C1D3F' }}>حالت نمایش برنامه:</span>
+          <button
+            onClick={() => setViewMode('matrix')}
+            className="pill-badge"
+            style={{
+              padding: '7px 14px',
+              cursor: 'pointer',
+              background: viewMode === 'matrix' ? '#0C1D3F' : 'transparent',
+              color: viewMode === 'matrix' ? '#E6C287' : '#0C1D3F',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <LayoutGrid size={14} /> ویرایشگر پارت‌ها و کلاس‌ها
+          </button>
+          <button
+            onClick={() => setViewMode('studentView')}
+            className="pill-badge"
+            style={{
+              padding: '7px 14px',
+              cursor: 'pointer',
+              background: viewMode === 'studentView' ? '#0C1D3F' : 'transparent',
+              color: viewMode === 'studentView' ? '#E6C287' : '#0C1D3F',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <Eye size={14} /> نمای تطبیقی دانش‌آموز (جدول و کارت‌های هفتگی)
+          </button>
+        </div>
+        <div style={{ fontSize: '12px', color: '#64748B' }}>
+          هماهنگ با ساختار برنامه دانش‌آموز و اولیا ✅
+        </div>
+      </div>
+
+      {viewMode === 'studentView' ? (
+        <div style={{ marginBottom: '25px' }}>
+          <WeeklyPlanTableView
+            planData={getFormattedPlanForView()}
+            studentName={studentName}
+            startDate={`${(selectedWeekIndex - 1) * 7 + 1} ${selectedMonth} ${selectedYear}`}
+            endDate={`${Math.min(selectedWeekIndex * 7, 30)} ${selectedMonth} ${selectedYear}`}
+            showExportButtons={true}
+            readOnly={true}
+          />
+        </div>
+      ) : (
+        <>
       <div className="no-print bento-card" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', position: 'relative' }}>
@@ -561,6 +668,8 @@ export default function AdvisorStudentPlan({ studentName = 'یاشا', studentId
       >
         <Plus size={18} color="#C5A880" /> افزودن پارت مطالعاتی جدید به جدول
       </button>
+      </>
+      )}
 
     </div>
   );
