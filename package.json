@@ -5,14 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build --outDir build",
+    "build": "vite build",
+    "build:win7": "vite build",
     "start": "tsx server.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "package:editions": "python3 scripts/build_zips.py",
     "zip:php": "python3 scripts/build_zips.py",
-    "zip:python": "python3 scripts/build_zips.py"
+    "zip:python": "python3 scripts/build_zips.py",
+    "zip:win7": "python3 scripts/build_zips.py"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

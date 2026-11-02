@@ -36,12 +36,40 @@ $options = [
 try {
     $pdo = new PDO($dsn, $db_user, $db_pass, $options);
 } catch (\PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        "detail" => "خطا در اتصال به پایگاه‌داده MySQL: " . $e->getMessage(),
-        "hint" => "لطفاً اطلاعات دیتابیس را در فایل api/db.php تنظیم نمایید."
-    ], JSON_UNESCAPED_UNICODE);
-    exit();
+    // در صورتی که دیتابیس هنوز در سرور محلی (مانند XAMPP در ویندوز ۷) ساخته نشده باشد، خودکار ساخته و مقداردهی می‌شود
+    if ($e->getCode() == 1049 || strpos($e->getMessage(), 'Unknown database') !== false) {
+        try {
+            $rootDsn = "mysql:host=$db_host;port=$db_port;charset=utf8mb4";
+            $rootPdo = new PDO($rootDsn, $db_user, $db_pass, $options);
+            $rootPdo->exec("CREATE DATABASE IF NOT EXISTS `$db_name` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            $rootPdo->exec("USE `$db_name`");
+            
+            // ایمپورت خودکار جداول از medulla.sql در صورت وجود
+            $sqlFile = __DIR__ . '/medulla.sql';
+            if (!file_exists($sqlFile)) {
+                $sqlFile = dirname(__DIR__) . '/medulla.sql';
+            }
+            if (file_exists($sqlFile)) {
+                $sqlQueries = file_get_contents($sqlFile);
+                $rootPdo->exec($sqlQueries);
+            }
+            $pdo = new PDO($dsn, $db_user, $db_pass, $options);
+        } catch (\PDOException $innerEx) {
+            http_response_code(500);
+            echo json_encode([
+                "detail" => "خطا در اتصال و ساخت خودکار دیتابیس MySQL: " . $innerEx->getMessage(),
+                "hint" => "در صورتی که از XAMPP در ویندوز ۷ استفاده می‌کنید، مطمئن شوید ماژول MySQL در کنترل پنل Start شده است."
+            ], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
+    } else {
+        http_response_code(500);
+        echo json_encode([
+            "detail" => "خطا در اتصال به پایگاه‌داده MySQL: " . $e->getMessage(),
+            "hint" => "لطفاً اطلاعات دیتابیس را در فایل api/db.php بررسی کنید (یا مطمئن شوید MySQL در XAMPP روشن است)."
+        ], JSON_UNESCAPED_UNICODE);
+        exit();
+    }
 }
 
 /**
