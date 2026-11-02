@@ -9,7 +9,10 @@
     "start": "tsx server.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "package:editions": "python3 scripts/build_zips.py",
+    "zip:php": "python3 scripts/build_zips.py",
+    "zip:python": "python3 scripts/build_zips.py"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
