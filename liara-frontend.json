@@ -1,9 +1,0 @@
-{
-  "platform": "react",
-  "rewrites": [
-    {
-      "source": "**",
-      "destination": "/index.html"
-    }
-  ]
-}
