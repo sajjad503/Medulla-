@@ -3,7 +3,7 @@ import {
   AlertTriangle, Users, Target, Search, ChevronRight, 
   BarChart3, UserX, Flame, CreditCard, FileText, Layers, Video, 
   CalendarClock, MessageCircle, X, Settings, Plus, Phone, ExternalLink, CheckCircle, ArrowRight,
-  Calendar, Key, Megaphone, Send, Clock, Trash2, Edit2, Loader2, Mic, UserPlus
+  Calendar, Key, Megaphone, Send, Clock, Trash2, Edit2, Loader2, Mic, UserPlus, CheckSquare
 } from 'lucide-react';
 import _DatePicker from "react-multi-date-picker";
 const DatePicker: any = (_DatePicker as any)?.default?.default || (_DatePicker as any)?.default || _DatePicker;
@@ -18,6 +18,7 @@ import AdvisorStudentPlan from './AdvisorStudentPlan';
 import AdvisorStudentReport from './AdvisorStudentReport';
 import AdvisorStudentReportCards from './AdvisorStudentReportCards';
 import AdvisorStudentExams from './AdvisorStudentExams';
+import AdvisorStudentHomeworks from './AdvisorStudentHomeworks';
 import DailyPlanner from './DailyPlanner';
 
 function AdvisorParentMessenger({ student }: { student: any }) {
@@ -474,6 +475,7 @@ export default function AdvisorDashboard() {
             {[
               { id: 'overview', label: 'نمای کلی (رادار)', icon: <Target size={14}/> },
               { id: 'dailyplanner', label: 'پلنر زمانی روزانه', icon: <Clock size={14}/> },
+              { id: 'homeworks', label: 'تکالیف درسی', icon: <CheckSquare size={14}/> },
               { id: 'plan', label: 'برنامه مطالعاتی هفتگی', icon: <CalendarClock size={14}/> },
               { id: 'parentMessage', label: 'پیام به اولیا', icon: <MessageCircle size={14}/> },
               { id: 'report', label: 'ماتریس گزارش کارها', icon: <FileText size={14}/> },
@@ -508,6 +510,9 @@ export default function AdvisorDashboard() {
                 studentName={selectedStudent.name} 
                 isAdvisorView={true} 
               />
+            )}
+            {activeProfileTab === 'homeworks' && (
+              <AdvisorStudentHomeworks student={selectedStudent} />
             )}
             {activeProfileTab === 'plan' && <AdvisorStudentPlan studentName={selectedStudent.name} studentId={selectedStudent.id} />}
             {activeProfileTab === 'parentMessage' && (

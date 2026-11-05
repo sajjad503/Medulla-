@@ -783,8 +783,18 @@ html.dark .role-switcher-dropdown {
 /* استایل‌های هوشمند برای جلوگیری از متون تیره روی پس‌زمینه تیره */
 html.dark [style*="color: #0C1D3F"],
 html.dark [style*="color:#0C1D3F"],
-html.dark [style*="color: rgb(12, 29, 63)"] {
+html.dark [style*="color: rgb(12, 29, 63)"],
+html.dark [style*="color: #1B3366"],
+html.dark [style*="color:#1B3366"],
+html.dark [style*="color: #1e293b"],
+html.dark [style*="color: #0f172a"] {
   color: #F1F5F9 !important;
+}
+
+html.dark [style*="color: gray"],
+html.dark [style*="color: #64748b"],
+html.dark [style*="color: #6b7280"] {
+  color: #94A3B8 !important;
 }
 
 html.dark [style*="color: var(--primary)"] {
@@ -802,6 +812,13 @@ html.dark [style*="background:#fff"],
 html.dark [style*="background-color: #FFFFFF"],
 html.dark [style*="background-color:#FFFFFF"] {
   background-color: #0d1728 !important;
+}
+
+html.dark [style*="background: rgba(12, 29, 63, 0.05)"],
+html.dark [style*="background: rgba(12, 29, 63, 0.04)"],
+html.dark [style*="background: rgba(12, 29, 63, 0.03)"],
+html.dark [style*="background: rgba(12, 29, 63, 0.02)"] {
+  background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 html.dark table th {

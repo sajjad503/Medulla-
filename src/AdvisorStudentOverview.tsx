@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit, Target, Layers, Bug, Mic, PhoneCall, Columns, Download, Lock, Plus, Trash2, Send, Clock, X } from 'lucide-react';
+import { Edit, Target, Layers, Bug, Mic, PhoneCall, Columns, Download, Lock, Plus, Trash2, Send, Clock, X, FileText, CheckCircle, ExternalLink, Eye, ShieldCheck } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import _DatePicker from "react-multi-date-picker";
 const DatePicker: any = (_DatePicker as any)?.default?.default || (_DatePicker as any)?.default || _DatePicker;
@@ -25,6 +25,8 @@ export default function AdvisorStudentOverview({ studentName = 'یاشا', stude
   const [sentVoice, setSentVoice] = useState<any>(null);
 
   const [studentStats, setStudentStats] = useState<{ total_time: number; total_tests: number; report_count: number }>({ total_time: 0, total_tests: 0, report_count: 0 });
+  const [assessmentTests, setAssessmentTests] = useState<any[]>([]);
+  const [selectedPreviewTest, setSelectedPreviewTest] = useState<any>(null);
   const [radarData, setRadarData] = useState<any[]>([
     { subject: 'زیست', score: 0, compareScore: 70 },
     { subject: 'شیمی', score: 0, compareScore: 65 },
@@ -65,7 +67,15 @@ export default function AdvisorStudentOverview({ studentName = 'یاشا', stude
   const fetchStudentOverview = async () => {
     if (!studentId) return;
     try {
-      const res = await api.get(`/records/student-overview/${studentId}`);
+      const [res, testsRes] = await Promise.all([
+        api.get(`/records/student-overview/${studentId}`).catch(() => ({ data: null })),
+        api.get(`/records/student-tests/${studentId}`).catch(() => ({ data: [] }))
+      ]);
+
+      if (testsRes.data && Array.isArray(testsRes.data)) {
+        setAssessmentTests(testsRes.data);
+      }
+
       if (res.data) {
         setStudentStats(res.data.stats || { total_time: 0, total_tests: 0, report_count: 0 });
 
@@ -378,6 +388,147 @@ export default function AdvisorStudentOverview({ studentName = 'یاشا', stude
         </div>
 
       </div>
+
+      {/* بخش کارنامه‌ها و آزمون‌های روان‌شناختی آپلود شده توسط دانش‌آموز */}
+      <div className="bento-card" style={{ marginBottom: '20px', borderRight: '4px solid #C5A880' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <h3 style={{ margin: '0 0 6px 0', color: 'var(--text-main, #0C1D3F)', fontSize: '17px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShieldCheck size={20} color="#C5A880" />
+              نتایج آزمون‌های شخصیت‌شناسی و رغبت‌سنجی «{studentName}»
+            </h3>
+            <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted, gray)' }}>
+              فایل‌ها و کارنامه‌های بارگذاری‌شده توسط دانش‌آموز جهت بررسی تیپ شخصیتی، سبک یادگیری و هدایت تحصیلی بهینه.
+            </p>
+          </div>
+          <span className="pill-badge" style={{ background: 'rgba(197, 168, 128, 0.15)', color: 'var(--gold-dark)', fontSize: '11px' }}>
+            {assessmentTests.length} فایل بارگذاری‌شده
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+          {[
+            { key: 'mbti', name: 'آزمون تیپ‌شناسی MBTI', desc: 'بررسی درون‌گرایی/برون‌گرایی و ساختار ذهنی' },
+            { key: 'holland', name: 'آزمون رغبت‌سنجی شغلی هالند', desc: 'جهت‌گیری تیپ شغلی و رشته‌های دانشگاهی' },
+            { key: 'gardner', name: 'آزمون هوش‌های چندگانه گاردنر', desc: 'هوش منطقی، کلامی، فضایی و هیجانی' },
+            { key: 'vark', name: 'آزمون سبک‌های یادگیری VARK', desc: 'یادگیری دیداری، شنیداری یا حرکتی' },
+            { key: 'study_skills', name: 'آزمون مهارت‌های مطالعه', desc: 'ارزیابی مدیریت زمان و تکنیک‌های تست‌زنی' }
+          ].map(testMeta => {
+            const uploaded = assessmentTests.find(t => t.test_type === testMeta.key);
+            return (
+              <div
+                key={testMeta.key}
+                style={{
+                  background: uploaded ? 'rgba(16, 185, 129, 0.04)' : 'rgba(12, 29, 63, 0.02)',
+                  border: uploaded ? '1.5px solid rgba(16, 185, 129, 0.3)' : '1px dashed var(--border-color)',
+                  borderRadius: '12px',
+                  padding: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '10px'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '13px', color: 'var(--text-main, #0C1D3F)' }}>
+                      {testMeta.name}
+                    </span>
+                    {uploaded ? (
+                      <span className="pill-badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: 'none', fontSize: '10px' }}>
+                        ثبت شد ✓
+                      </span>
+                    ) : (
+                      <span className="pill-badge" style={{ background: 'rgba(156, 163, 175, 0.15)', color: '#9CA3AF', border: 'none', fontSize: '10px' }}>
+                        در انتظار
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted, gray)', lineHeight: '1.5' }}>
+                    {testMeta.desc}
+                  </p>
+                </div>
+
+                {uploaded ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '8px', borderTop: '1px solid rgba(16,185,129,0.2)' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--text-muted)' }} className="mono-num">
+                      {uploaded.file_name} ({uploaded.created_at?.slice(0, 10) || 'ثبت‌نام'})
+                    </span>
+                    <button
+                      onClick={() => setSelectedPreviewTest(uploaded)}
+                      style={{
+                        padding: '6px 10px',
+                        background: 'var(--primary, #0C1D3F)',
+                        color: 'var(--gold, #E6C287)',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '5px'
+                      }}
+                    >
+                      <Eye size={12} />
+                      مشاهده نتیجه آزمون
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', padding: '6px', background: 'rgba(0,0,0,0.02)', borderRadius: '6px' }}>
+                    هنوز فایلی توسط دانش‌آموز آپلود نشده
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* مودال پیش‌نمایش فایل آزمون */}
+      {selectedPreviewTest && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(8, 18, 41, 0.85)', backdropFilter: 'blur(6px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, direction: 'rtl', padding: '20px' }}>
+          <div className="bento-card" style={{ width: '100%', maxWidth: '640px', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.25s ease-out' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+              <div>
+                <h3 style={{ margin: 0, color: 'var(--text-main, #0C1D3F)', fontSize: '16px', fontWeight: '900' }}>
+                  کارنامه آزمون: {selectedPreviewTest.file_name}
+                </h3>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>دانش‌آموز: {studentName}</span>
+              </div>
+              <button onClick={() => setSelectedPreviewTest(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px', background: 'rgba(0,0,0,0.03)', borderRadius: '10px', minHeight: '280px' }}>
+              {selectedPreviewTest.file_data?.startsWith('data:image') || selectedPreviewTest.file_path?.match(/\.(jpg|jpeg|png|webp)$/i) ? (
+                <img
+                  src={selectedPreviewTest.file_data || selectedPreviewTest.file_path}
+                  alt="کارنامه آزمون"
+                  style={{ maxWidth: '100%', maxHeight: '65vh', objectFit: 'contain', borderRadius: '8px' }}
+                />
+              ) : (
+                <div style={{ textAlign: 'center', padding: '30px' }}>
+                  <FileText size={48} color="var(--primary)" style={{ margin: '0 auto 12px auto' }} />
+                  <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: 'var(--text-main)', fontWeight: 'bold' }}>
+                    فایل کارنامه در قالب مستندات (PDF / سند متنی) بارگذاری شده است.
+                  </p>
+                  <a
+                    href={selectedPreviewTest.file_data || selectedPreviewTest.file_path}
+                    download={selectedPreviewTest.file_name}
+                    className="gold-glow-btn"
+                    style={{ padding: '8px 18px', borderRadius: '8px', fontSize: '12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Download size={14} /> دانلود فایل PDF
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bento-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>

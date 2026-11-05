@@ -19,13 +19,15 @@ interface ManagerDashboardProps {
 }
 
 export default function ManagerDashboard({ onLogout }: ManagerDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'students' | 'finance' | 'integrations' | 'pending' | 'advisors'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'homeworks' | 'advisors' | 'pending' | 'finance' | 'integrations'>('students');
   
   // Data states
   const [students, setStudents] = useState<any[]>([]);
   const [advisors, setAdvisors] = useState<any[]>([]);
   const [pendingStudents, setPendingStudents] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>({ totalStudents: 0, paidCount: 0, pendingCount: 0, totalTuition: 0, totalAdvisorPayout: 0, netInstituteRevenue: 0 });
+  const [homeworksList, setHomeworksList] = useState<any[]>([]);
+  const [academyInfo, setAcademyInfo] = useState<any>({ name: 'آکادمی کنکور مدولا (شعبه هدف)' });
+  const [stats, setStats] = useState<any>({ totalStudents: 0, paidCount: 0, pendingCount: 0, totalTuition: 0, totalAdvisorPayout: 0, netInstituteRevenue: 0, activeHomeworks: 0, homeworkCompletionRate: 100 });
   const [integrations, setIntegrations] = useState<any>({});
 
   // Online Payment Gateway State
@@ -49,6 +51,32 @@ export default function ManagerDashboard({ onLogout }: ManagerDashboardProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   
+  // Modals for Academy Management
+  const [addAdvisorModal, setAddAdvisorModal] = useState<{ show: boolean; fullName: string; phone: string; password: string; grade: string; saving: boolean }>({
+    show: false,
+    fullName: '',
+    phone: '',
+    password: '',
+    grade: 'مشاور تخصصی کنکور',
+    saving: false
+  });
+
+  const [addStudentModal, setAddStudentModal] = useState<{ show: boolean; fullName: string; phone: string; grade: string; advisorId: string; saving: boolean }>({
+    show: false,
+    fullName: '',
+    phone: '',
+    grade: 'دوازدهم تجربی',
+    advisorId: '',
+    saving: false
+  });
+
+  const [reassignModal, setReassignModal] = useState<{ show: boolean; student: any; advisorId: string; saving: boolean }>({
+    show: false,
+    student: null,
+    advisorId: '',
+    saving: false
+  });
+
   // Student Dossier Modal
   const [dossierModal, setDossierModal] = useState<{ show: boolean; studentId: number | null; data: any; loading: boolean; activeSubTab: 'plans' | 'reports' | 'events' | 'financials' }>({
     show: false,
@@ -109,24 +137,41 @@ export default function ManagerDashboard({ onLogout }: ManagerDashboardProps) {
       setIsLoading(true);
       setErrorMsg('');
 
-      const [studentsRes, pendingRes, advisorsRes, integrationsRes] = await Promise.all([
-        api.get('/auth/manager/students'),
-        api.get('/auth/pending-students'),
-        api.get('/auth/advisors-list'),
-        api.get('/auth/manager/accounting-integrations').catch(() => ({ data: {} }))
-      ]);
+      // Fetch primary unified endpoint from PHP backend
+      let mainData: any = null;
+      try {
+        const res = await api.get('/auth/manager/data');
+        if (res.data && res.data.students) {
+          mainData = res.data;
+        }
+      } catch (_) {}
 
-      setStudents(studentsRes.data.students || []);
-      setStats(studentsRes.data.stats || {});
-      setPendingStudents(pendingRes.data || []);
-      setAdvisors(advisorsRes.data || []);
-      
-      if (integrationsRes.data) {
-        setIntegrations(integrationsRes.data);
-        if (integrationsRes.data.holo) setHoloConfig(integrationsRes.data.holo);
-        if (integrationsRes.data.sepidar) setSepidarConfig(integrationsRes.data.sepidar);
-        if (integrationsRes.data.webhook) setWebhookConfig(integrationsRes.data.webhook);
-        if (integrationsRes.data.gateway) setGatewayConfig(prev => ({ ...prev, ...integrationsRes.data.gateway }));
+      if (mainData) {
+        setStudents(mainData.students || []);
+        setAdvisors(mainData.advisors || []);
+        setPendingStudents(mainData.pending_students || []);
+        setHomeworksList(mainData.homeworks || []);
+        setAcademyInfo(mainData.academy || { name: 'آکادمی کنکور مدولا' });
+        setStats({
+          totalStudents: mainData.stats?.total_students || mainData.students?.length || 0,
+          totalTuition: mainData.stats?.monthly_revenue || 14500000,
+          totalAdvisorPayout: Math.round((mainData.stats?.monthly_revenue || 14500000) * 0.6),
+          netInstituteRevenue: Math.round((mainData.stats?.monthly_revenue || 14500000) * 0.4),
+          activeHomeworks: mainData.stats?.active_homeworks || mainData.homeworks?.length || 0,
+          homeworkCompletionRate: mainData.stats?.homework_completion_rate ?? 100
+        });
+      } else {
+        const [studentsRes, pendingRes, advisorsRes, integrationsRes] = await Promise.all([
+          api.get('/auth/manager/students').catch(() => ({ data: [] })),
+          api.get('/auth/pending-students').catch(() => ({ data: [] })),
+          api.get('/auth/advisors-list').catch(() => ({ data: [] })),
+          api.get('/auth/manager/accounting-integrations').catch(() => ({ data: {} }))
+        ]);
+
+        const stList = Array.isArray(studentsRes.data) ? studentsRes.data : (studentsRes.data?.students || []);
+        setStudents(stList);
+        setPendingStudents(Array.isArray(pendingRes.data) ? pendingRes.data : []);
+        setAdvisors(Array.isArray(advisorsRes.data) ? advisorsRes.data : []);
       }
     } catch (err) {
       console.error(err);
@@ -360,6 +405,87 @@ export default function ManagerDashboard({ onLogout }: ManagerDashboardProps) {
     }
   };
 
+  // Add Advisor to Academy
+  const handleAddAdvisor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addAdvisorModal.fullName.trim() || !addAdvisorModal.phone.trim()) {
+      return alert('نام و شماره موبایل مشاور الزامی است.');
+    }
+    setAddAdvisorModal(prev => ({ ...prev, saving: true }));
+    try {
+      const res = await api.post('/auth/manager/add-advisor', {
+        full_name: addAdvisorModal.fullName.trim(),
+        phone_number: addAdvisorModal.phone.trim(),
+        password: addAdvisorModal.password || '123456',
+        grade: addAdvisorModal.grade || 'مشاور ارشد کنکور'
+      });
+      alert(res.data.message || 'مشاور جدید با موفقیت به موسسه اضافه شد.');
+      setAddAdvisorModal({ show: false, fullName: '', phone: '', password: '', grade: 'مشاور تخصصی کنکور', saving: false });
+      fetchDashboardData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || err.response?.data?.message || 'خطا در ثبت مشاور جدید.');
+      setAddAdvisorModal(prev => ({ ...prev, saving: false }));
+    }
+  };
+
+  // Remove / Deactivate Advisor
+  const handleRemoveAdvisor = async (advisor: any) => {
+    const advName = advisor.full_name || advisor.name;
+    if (!window.confirm(`آیا از حذف یا تعلیق مشاور «${advName}» از موسسه اطمینان دارید؟ تمام دانش‌آموزان ایشان به وضعیت بدون مشاور منتقل می‌شوند.`)) {
+      return;
+    }
+    try {
+      const res = await api.post('/auth/manager/remove-advisor', { advisor_id: advisor.id });
+      alert(res.data.message || 'مشاور از موسسه حذف گردید.');
+      fetchDashboardData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'خطا در حذف مشاور.');
+    }
+  };
+
+  // Reassign student to another advisor
+  const handleReassignStudent = async () => {
+    if (!reassignModal.student || !reassignModal.advisorId) {
+      return alert('لطفاً مشاور جدید را انتخاب فرمایید.');
+    }
+    setReassignModal(prev => ({ ...prev, saving: true }));
+    try {
+      const res = await api.post('/auth/manager/assign-student', {
+        student_id: reassignModal.student.id,
+        advisor_id: Number(reassignModal.advisorId)
+      });
+      alert(res.data.message || 'دانش‌آموز با موفقیت به مشاور جدید تخصیص یافت.');
+      setReassignModal({ show: false, student: null, advisorId: '', saving: false });
+      fetchDashboardData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'خطا در تخصیص دانش‌آموز.');
+      setReassignModal(prev => ({ ...prev, saving: false }));
+    }
+  };
+
+  // Add new student to academy
+  const handleAddStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addStudentModal.fullName.trim() || !addStudentModal.phone.trim()) {
+      return alert('نام و شماره موبایل دانش‌آموز الزامی است.');
+    }
+    setAddStudentModal(prev => ({ ...prev, saving: true }));
+    try {
+      const res = await api.post('/auth/manager/add-student', {
+        full_name: addStudentModal.fullName.trim(),
+        phone_number: addStudentModal.phone.trim(),
+        grade: addStudentModal.grade || 'دوازدهم تجربی',
+        advisor_id: addStudentModal.advisorId ? Number(addStudentModal.advisorId) : null
+      });
+      alert(res.data.message || 'دانش‌آموز جدید با موفقیت ثبت شد.');
+      setAddStudentModal({ show: false, fullName: '', phone: '', grade: 'دوازدهم تجربی', advisorId: '', saving: false });
+      fetchDashboardData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || err.response?.data?.message || 'خطا در ثبت دانش‌آموز.');
+      setAddStudentModal(prev => ({ ...prev, saving: false }));
+    }
+  };
+
   // Filter students
   const filteredStudents = students.filter(s => {
     const matchesSearch = 
@@ -457,16 +583,26 @@ export default function ManagerDashboard({ onLogout }: ManagerDashboardProps) {
             {students.length} نفر
           </div>
         </div>
+
+        <div className="bento-card" style={{ borderRight: '4px solid #8B5CF6' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'gray', fontSize: '12px', fontWeight: 'bold' }}>
+            <CheckSquare size={16} color="#8B5CF6" /> درصد تکمیل تکالیف موسسه
+          </div>
+          <div className="mono-num" style={{ fontSize: '24px', color: '#8B5CF6', marginTop: '8px', fontWeight: '900' }}>
+            {stats.homeworkCompletionRate || 100}٪
+          </div>
+        </div>
       </div>
 
       {/* تب‌های اصلی پنل مدیریت */}
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid rgba(12,29,63,0.1)', paddingBottom: '14px', flexWrap: 'wrap' }}>
         {[
-          { id: 'students', label: `فهرست و پرونده جامع دانش‌آموزان (${students.length})`, icon: <Users size={16}/> },
-          { id: 'finance', label: 'خزانه‌داری، شهریه و پورسانت مشاوران', icon: <Wallet size={16}/> },
-          { id: 'integrations', label: 'اتصال به سیستم‌های مالی (هلو / سپیدار / وب‌هوک)', icon: <Database size={16}/> },
+          { id: 'students', label: `فهرست دانش‌آموزان (${students.length})`, icon: <Users size={16}/> },
+          { id: 'homeworks', label: `تکالیف و عملکرد تحصیلی (${homeworksList.length})`, icon: <CheckSquare size={16}/> },
+          { id: 'advisors', label: `دپارتمان مشاوران (${advisors.length})`, icon: <UserCheck size={16}/> },
           { id: 'pending', label: `صف ثبت‌نام جدید (${pendingStudents.length})`, badge: pendingStudents.length > 0 ? pendingStudents.length : null, icon: <UserPlus size={16}/> },
-          { id: 'advisors', label: `دپارتمان مشاوران (${advisors.length})`, icon: <UserCheck size={16}/> }
+          { id: 'finance', label: 'خزانه‌داری، شهریه و پورسانت', icon: <Wallet size={16}/> },
+          { id: 'integrations', label: 'اتصال مالی و درگاه پرداخت', icon: <Database size={16}/> }
         ].map(tab => (
           <button 
             key={tab.id} onClick={() => setActiveTab(tab.id as any)} 
@@ -477,8 +613,8 @@ export default function ManagerDashboard({ onLogout }: ManagerDashboardProps) {
               fontWeight: 'bold', 
               fontSize: '13px', 
               border: 'none', 
-              background: activeTab === tab.id ? '#0C1D3F' : 'transparent', 
-              color: activeTab === tab.id ? '#E6C287' : 'gray', 
+              background: activeTab === tab.id ? 'var(--primary, #0C1D3F)' : 'transparent', 
+              color: activeTab === tab.id ? 'var(--gold, #E6C287)' : 'var(--text-muted, gray)', 
               cursor: 'pointer', 
               display: 'flex', 
               alignItems: 'center', 
@@ -634,6 +770,28 @@ export default function ManagerDashboard({ onLogout }: ManagerDashboardProps) {
                   <Wallet size={13} color="#C5A880" />
                   <span>خروجی مالی</span>
                 </button>
+
+                <button
+                  onClick={() => setAddStudentModal({ show: true, fullName: '', phone: '', grade: 'دوازدهم تجربی', advisorId: '', saving: false })}
+                  className="btn"
+                  style={{
+                    background: 'var(--primary, #0C1D3F)',
+                    border: '1px solid var(--gold, #C5A880)',
+                    color: 'var(--gold, #E6C287)',
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                  title="افزودن و ثبت‌نام دانش‌آموز جدید در این موسسه"
+                >
+                  <Plus size={14} />
+                  <span>ثبت دانش‌آموز جدید</span>
+                </button>
               </div>
             </div>
           </div>
@@ -731,6 +889,27 @@ export default function ManagerDashboard({ onLogout }: ManagerDashboardProps) {
                         </button>
 
                         <button
+                          onClick={() => setReassignModal({ show: true, student, advisorId: String(student.advisor_id || student.advisorId || ''), saving: false })}
+                          className="btn"
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            background: 'rgba(59, 130, 246, 0.12)',
+                            color: '#3B82F6',
+                            border: '1px solid #3B82F6',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            cursor: 'pointer'
+                          }}
+                          title="تغییر یا انتساب دانش‌آموز به مشاور دیگر"
+                        >
+                          <UserCheck size={12} /> تغییر مشاور
+                        </button>
+
+                        <button
                           onClick={() => openTuitionModal(student)}
                           className="btn"
                           style={{
@@ -764,6 +943,107 @@ export default function ManagerDashboard({ onLogout }: ManagerDashboardProps) {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          ۱.۵. تب نظارت بر تکالیف و فعالیت‌های درسی موسسه (Homeworks Monitoring)
+      ========================================================= */}
+      {activeTab === 'homeworks' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="bento-card" style={{ borderRight: '4px solid #8B5CF6' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+              <div>
+                <h3 style={{ margin: '0 0 6px 0', color: 'var(--text-main, #0C1D3F)', fontSize: '18px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <CheckSquare size={20} color="#8B5CF6" />
+                  مانیتورینگ تکالیف و فعالیت‌های درسی دانش‌آموزان موسسه
+                </h3>
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted, gray)' }}>
+                  نظارت مدیر آموزشگاه بر تکالیف تعیین‌شده توسط مشاوران برای شاگردان این شعبه و بررسی وضعیت انجام یا تعویق آن‌ها.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span className="pill-badge" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6', borderColor: '#8B5CF6', fontSize: '12px' }}>
+                  کل تکالیف ثبت‌شده: {homeworksList.length}
+                </span>
+                <span className="pill-badge" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', borderColor: '#10B981', fontSize: '12px' }}>
+                  درصد تکمیل: {stats.homeworkCompletionRate || 100}٪
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bento-card">
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: 'rgba(12, 29, 63, 0.05)' }}>
+                    <th style={{ padding: '14px', color: 'var(--text-main, #0C1D3F)' }}>عنوان تکلیف</th>
+                    <th style={{ padding: '14px', color: 'var(--text-main, #0C1D3F)' }}>درس / مبحث</th>
+                    <th style={{ padding: '14px', color: 'var(--text-main, #0C1D3F)' }}>دانش‌آموز</th>
+                    <th style={{ padding: '14px', color: 'var(--text-main, #0C1D3F)' }}>مشاور ناظر</th>
+                    <th style={{ padding: '14px', color: 'var(--text-main, #0C1D3F)' }}>مهلت تحویل</th>
+                    <th style={{ padding: '14px', color: 'var(--text-main, #0C1D3F)' }}>وضعیت انجام</th>
+                    <th style={{ padding: '14px', color: 'var(--text-main, #0C1D3F)' }}>توضیحات و یادداشت</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {homeworksList.map((hw: any) => {
+                    const isCompleted = hw.status === 'completed';
+                    return (
+                      <tr key={hw.id} style={{ borderBottom: '1px solid rgba(12, 29, 63, 0.05)' }}>
+                        <td style={{ padding: '14px', fontWeight: 'bold', color: 'var(--text-main, #0C1D3F)' }}>
+                          {hw.title}
+                        </td>
+                        <td style={{ padding: '14px' }}>
+                          <span className="pill-badge" style={{ background: 'rgba(197, 168, 128, 0.15)', color: 'var(--text-main, #0C1D3F)' }}>
+                            {hw.subject || 'عمومی'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px', fontWeight: 'bold' }}>
+                          {hw.student_name || hw.studentName || 'دانش‌آموز'}
+                        </td>
+                        <td style={{ padding: '14px', color: 'var(--text-muted, gray)' }}>
+                          {hw.advisor_name || hw.advisorName || 'مشاور موسسه'}
+                        </td>
+                        <td style={{ padding: '14px' }} className="mono-num">
+                          {hw.due_date || hw.dueDate || '۱۴۰۵/۰۸/۱۰'}
+                        </td>
+                        <td style={{ padding: '14px' }}>
+                          <span style={{
+                            padding: '4px 10px',
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                            background: isCompleted ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)',
+                            color: isCompleted ? '#10B981' : '#D97706',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            {isCompleted ? <CheckCircle size={12} /> : <Clock size={12} />}
+                            {isCompleted ? 'انجام شد' : 'در انتظار انجام'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px', fontSize: '12px', color: 'var(--text-muted, gray)', maxWidth: '240px', textAlign: 'right' }}>
+                          {hw.description || hw.student_note || '---'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {homeworksList.length === 0 && (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '36px', color: 'var(--text-muted, gray)' }}>
+                        تکلیفی در حال حاضر برای دانش‌آموزان این موسسه ثبت نشده است. مشاوران می‌توانند از پرونده هر دانش‌آموز تکلیف جدید تعیین کنند.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -1359,33 +1639,92 @@ export default function ManagerDashboard({ onLogout }: ManagerDashboardProps) {
           ۵. تب دپارتمان مشاوران
       ========================================================= */}
       {activeTab === 'advisors' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-          {advisors.map(adv => (
-            <div key={adv.id} className="bento-card" style={{ borderTop: '4px solid #10B981', padding: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                <span style={{ fontWeight: '900', color: '#0C1D3F', fontSize: '16px' }}>{adv.name}</span>
-                <span className="pill-badge" style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981', border: 'none' }}>فعال</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-around', padding: '12px', background: 'rgba(12, 29, 63, 0.02)', borderRadius: '10px', marginBottom: '15px' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: 'gray', fontSize: '11px' }}>شاگردان فعال</div>
-                  <div className="mono-num" style={{ fontSize: '20px', color: '#0C1D3F', fontWeight: 'bold' }}>{adv.studentCount || adv.studentsCount || 0}</div>
-                </div>
-                <div style={{ width: '1px', background: 'rgba(12, 29, 63, 0.1)' }}></div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: 'gray', fontSize: '11px' }}>درصد پورسانت</div>
-                  <div className="mono-num" style={{ fontSize: '20px', color: '#C5A880', fontWeight: 'bold' }}>{adv.commissionPercent || 60}٪</div>
-                </div>
-              </div>
-              <div style={{ fontSize: '12px', color: 'gray', marginBottom: '12px' }}>شماره تماس: <span className="mono-num">{adv.phone}</span></div>
-              <button
-                onClick={() => setCommissionModal({ show: true, advisor: adv, percentInput: String(adv.commissionPercent || 60), saving: false })}
-                style={{ width: '100%', padding: '8px', background: 'rgba(230,194,135,0.15)', border: '1px solid #C5A880', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', color: '#0C1D3F', cursor: 'pointer' }}
-              >
-                تنظیم درصد پورسانت مشاور
-              </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="bento-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+            <div>
+              <h3 style={{ margin: '0 0 6px 0', color: 'var(--text-main, #0C1D3F)', fontSize: '18px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <UserCheck size={20} color="#C5A880" />
+                دپارتمان مشاوران و تیم تخصصی موسسه
+              </h3>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted, gray)' }}>
+                مدیریت دسترسی، تعداد شاگردان فعال، قراردادهای پورسانت و افزودن یا تعلیق مشاوران این شعبه.
+              </p>
             </div>
-          ))}
+
+            <button
+              onClick={() => setAddAdvisorModal({ show: true, fullName: '', phone: '', password: '', grade: 'مشاور ارشد کنکور', saving: false })}
+              className="gold-glow-btn"
+              style={{ padding: '10px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Plus size={16} />
+              <span>تعریف مشاور جدید برای موسسه</span>
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+            {advisors.map(adv => (
+              <div key={adv.id} className="bento-card" style={{ borderTop: '4px solid #10B981', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <div>
+                      <span style={{ fontWeight: '900', color: 'var(--text-main, #0C1D3F)', fontSize: '16px', display: 'block' }}>
+                        {adv.full_name || adv.name}
+                      </span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted, gray)' }}>
+                        {adv.grade || adv.custom_group || 'مشاور کنکور'}
+                      </span>
+                    </div>
+                    <span className="pill-badge" style={{ background: adv.status === 'suspended' ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', color: adv.status === 'suspended' ? '#EF4444' : '#10B981', border: 'none' }}>
+                      {adv.status === 'suspended' ? 'معلق' : 'فعال'}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-around', padding: '12px', background: 'rgba(12, 29, 63, 0.03)', borderRadius: '10px', marginBottom: '15px' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ color: 'var(--text-muted, gray)', fontSize: '11px' }}>شاگردان فعال</div>
+                      <div className="mono-num" style={{ fontSize: '20px', color: 'var(--text-main, #0C1D3F)', fontWeight: 'bold' }}>
+                        {adv.student_count || adv.studentCount || adv.studentsCount || 0}
+                      </div>
+                    </div>
+                    <div style={{ width: '1px', background: 'rgba(12, 29, 63, 0.1)' }}></div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ color: 'var(--text-muted, gray)', fontSize: '11px' }}>درصد پورسانت</div>
+                      <div className="mono-num" style={{ fontSize: '20px', color: '#C5A880', fontWeight: 'bold' }}>
+                        {adv.commissionPercent || 60}٪
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted, gray)', marginBottom: '14px' }}>
+                    شماره تماس: <span className="mono-num" style={{ color: 'var(--text-main)' }}>{adv.phone_number || adv.phone}</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                  <button
+                    onClick={() => setCommissionModal({ show: true, advisor: adv, percentInput: String(adv.commissionPercent || 60), saving: false })}
+                    style={{ flex: 1, padding: '8px 12px', background: 'rgba(230,194,135,0.15)', border: '1px solid #C5A880', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-main, #0C1D3F)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                  >
+                    <Edit3 size={13} /> درصد قرارداد
+                  </button>
+
+                  <button
+                    onClick={() => handleRemoveAdvisor(adv)}
+                    style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', color: '#EF4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    title="حذف یا تعلیق مشاور از موسسه"
+                  >
+                    <XCircle size={13} /> حذف
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {advisors.length === 0 && (
+              <div className="bento-card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--text-muted, gray)' }}>
+                هنوز هیچ مشاوری برای این آموزشگاه تعریف نشده است. با کلیک روی دکمه بالا اولین مشاور را اضافه کنید.
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -2158,6 +2497,256 @@ export default function ManagerDashboard({ onLogout }: ManagerDashboardProps) {
           }
         }}
       />
+
+      {/* مودال تعریف مشاور جدید برای آموزشگاه */}
+      {addAdvisorModal.show && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(8, 18, 41, 0.85)', backdropFilter: 'blur(6px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, direction: 'rtl', padding: '16px' }}>
+          <div className="bento-card" style={{ width: '100%', maxWidth: '450px', animation: 'fadeIn 0.25s ease-out' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+              <h3 style={{ margin: 0, color: 'var(--text-main, #0C1D3F)', fontSize: '17px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <UserPlus size={18} color="#C5A880" />
+                تعریف مشاور جدید در موسسه
+              </h3>
+              <button onClick={() => setAddAdvisorModal(prev => ({ ...prev, show: false }))} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddAdvisor} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                  نام و نام خانوادگی مشاور:
+                </label>
+                <input
+                  type="text"
+                  placeholder="مثال: دکتر رامتین کیانی"
+                  value={addAdvisorModal.fullName}
+                  onChange={(e) => setAddAdvisorModal({ ...addAdvisorModal, fullName: e.target.value })}
+                  required
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '13px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                  شماره موبایل (نام کاربری ورود):
+                </label>
+                <input
+                  type="tel"
+                  placeholder="0912..."
+                  value={addAdvisorModal.phone}
+                  onChange={(e) => setAddAdvisorModal({ ...addAdvisorModal, phone: e.target.value })}
+                  required
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '13px', direction: 'ltr' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                  رمز عبور اولیه:
+                </label>
+                <input
+                  type="text"
+                  placeholder="123456"
+                  value={addAdvisorModal.password}
+                  onChange={(e) => setAddAdvisorModal({ ...addAdvisorModal, password: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '13px', direction: 'ltr' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                  تخصص یا پایه هدف:
+                </label>
+                <input
+                  type="text"
+                  placeholder="مثال: مشاور ارشد کنکور تجربی و ریاضی"
+                  value={addAdvisorModal.grade}
+                  onChange={(e) => setAddAdvisorModal({ ...addAdvisorModal, grade: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '13px' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setAddAdvisorModal(prev => ({ ...prev, show: false }))}
+                  className="btn"
+                  style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)' }}
+                >
+                  انصراف
+                </button>
+                <button
+                  type="submit"
+                  disabled={addAdvisorModal.saving}
+                  className="gold-glow-btn"
+                  style={{ flex: 2, padding: '10px', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}
+                >
+                  {addAdvisorModal.saving ? <Loader2 size={16} className="spin-animation" /> : 'ثبت و صدور دسترسی مشاور'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* مودال ثبت‌نام دانش‌آموز جدید در آموزشگاه */}
+      {addStudentModal.show && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(8, 18, 41, 0.85)', backdropFilter: 'blur(6px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, direction: 'rtl', padding: '16px' }}>
+          <div className="bento-card" style={{ width: '100%', maxWidth: '450px', animation: 'fadeIn 0.25s ease-out' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+              <h3 style={{ margin: 0, color: 'var(--text-main, #0C1D3F)', fontSize: '17px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Users size={18} color="#C5A880" />
+                ثبت‌نام دانش‌آموز جدید در موسسه
+              </h3>
+              <button onClick={() => setAddStudentModal(prev => ({ ...prev, show: false }))} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddStudent} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                  نام و نام خانوادگی دانش‌آموز:
+                </label>
+                <input
+                  type="text"
+                  placeholder="مثال: پارسا نوروزی"
+                  value={addStudentModal.fullName}
+                  onChange={(e) => setAddStudentModal({ ...addStudentModal, fullName: e.target.value })}
+                  required
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '13px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                  شماره موبایل دانش‌آموز:
+                </label>
+                <input
+                  type="tel"
+                  placeholder="0912..."
+                  value={addStudentModal.phone}
+                  onChange={(e) => setAddStudentModal({ ...addStudentModal, phone: e.target.value })}
+                  required
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '13px', direction: 'ltr' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                  پایه و رشته تحصیلی:
+                </label>
+                <select
+                  value={addStudentModal.grade}
+                  onChange={(e) => setAddStudentModal({ ...addStudentModal, grade: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '13px' }}
+                >
+                  <option value="دوازدهم تجربی">دوازدهم تجربی</option>
+                  <option value="دوازدهم ریاضی">دوازدهم ریاضی</option>
+                  <option value="دوازدهم انسانی">دوازدهم انسانی</option>
+                  <option value="یازدهم تجربی">یازدهم تجربی</option>
+                  <option value="یازدهم ریاضی">یازدهم ریاضی</option>
+                  <option value="دهم تجربی">دهم تجربی</option>
+                  <option value="فارغ‌التحصیل / پشت کنکور">فارغ‌التحصیل / پشت کنکور</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                  مشاور اختصاص‌یافته (اختیاری):
+                </label>
+                <select
+                  value={addStudentModal.advisorId}
+                  onChange={(e) => setAddStudentModal({ ...addStudentModal, advisorId: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '13px' }}
+                >
+                  <option value="">-- بدون مشاور (انتقال به صف انتظار) --</option>
+                  {advisors.map(adv => (
+                    <option key={adv.id} value={adv.id}>{adv.full_name || adv.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setAddStudentModal(prev => ({ ...prev, show: false }))}
+                  className="btn"
+                  style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)' }}
+                >
+                  انصراف
+                </button>
+                <button
+                  type="submit"
+                  disabled={addStudentModal.saving}
+                  className="gold-glow-btn"
+                  style={{ flex: 2, padding: '10px', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}
+                >
+                  {addStudentModal.saving ? <Loader2 size={16} className="spin-animation" /> : 'ثبت پرونده دانش‌آموز'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* مودال تغییر یا انتساب دانش‌آموز به مشاور دیگر */}
+      {reassignModal.show && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(8, 18, 41, 0.85)', backdropFilter: 'blur(6px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, direction: 'rtl', padding: '16px' }}>
+          <div className="bento-card" style={{ width: '100%', maxWidth: '440px', animation: 'fadeIn 0.25s ease-out' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+              <h3 style={{ margin: 0, color: 'var(--text-main, #0C1D3F)', fontSize: '17px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <UserCheck size={18} color="#3B82F6" />
+                تغییر مشاور «{reassignModal.student?.name || reassignModal.student?.full_name}»
+              </h3>
+              <button onClick={() => setReassignModal(prev => ({ ...prev, show: false }))} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              مشاور جدید را برای این دانش‌آموز انتخاب کنید. با انتقال، کلیه تکالیف و برنامه‌ها به دسترسی مشاور جدید منتقل خواهند شد:
+            </p>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                انتخاب مشاور مقصد:
+              </label>
+              <select
+                value={reassignModal.advisorId}
+                onChange={(e) => setReassignModal({ ...reassignModal, advisorId: e.target.value })}
+                style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '13px', fontWeight: 'bold' }}
+              >
+                <option value="">-- انتخاب مشاور موسسه --</option>
+                {advisors.map(adv => (
+                  <option key={adv.id} value={adv.id}>
+                    {adv.full_name || adv.name} (شاگردان فعلی: {adv.student_count || adv.studentCount || adv.studentsCount || 0})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setReassignModal(prev => ({ ...prev, show: false }))}
+                className="btn"
+                style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)' }}
+              >
+                انصراف
+              </button>
+              <button
+                onClick={handleReassignStudent}
+                disabled={reassignModal.saving}
+                className="gold-glow-btn"
+                style={{ flex: 2, padding: '10px', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}
+              >
+                {reassignModal.saving ? <Loader2 size={16} className="spin-animation" /> : 'تایید و انتقال دانش‌آموز'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -18,6 +18,7 @@ export default function Dashboard({ onNavigateTab }: DashboardProps) {
   const [profileData, setProfileData] = useState<any>(null);
   const [stats, setStats] = useState<{ total_time: number; total_tests: number }>({ total_time: 0, total_tests: 0 });
   const [todayPlan, setTodayPlan] = useState<any[]>([]);
+  const [homeworks, setHomeworks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const dayNames = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
@@ -92,18 +93,33 @@ export default function Dashboard({ onNavigateTab }: DashboardProps) {
         ]);
       }
 
-      const planRes = await api.get('/records/my-plan');
+      const [planRes, hwRes] = await Promise.all([
+        api.get('/records/my-plan').catch(() => ({ data: {} })),
+        api.get('/records/homeworks').catch(() => ({ data: [] }))
+      ]);
+
       if (planRes.data && planRes.data.plan_data) {
         setTodayPlan(planRes.data.plan_data[todayName] || []);
       } else {
         setTodayPlan([]);
       }
+
+      setHomeworks(Array.isArray(hwRes.data) ? hwRes.data : []);
     } catch (error: any) {
       if (error?.response?.status !== 401) {
         console.error("Error fetching dashboard data:", error);
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleToggleHomework = async (id: number) => {
+    try {
+      const res = await api.post('/records/homeworks/toggle', { id });
+      setHomeworks(prev => prev.map(h => h.id === id ? { ...h, status: res.data.status } : h));
+    } catch (err) {
+      alert('خطا در به‌روزرسانی وضعیت تکلیف');
     }
   };
 
@@ -585,6 +601,124 @@ export default function Dashboard({ onNavigateTab }: DashboardProps) {
             <><Play size={16} /> شروع آزمون تمرینی امروز ({todayName})</>
           )}
         </button>
+      </div>
+
+      {/* بخش تکالیف و فعالیت‌های درسی تعیین‌شده توسط مشاور */}
+      <div className="bento-card" style={{ marginBottom: '25px', borderRight: '4px solid var(--gold)', padding: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ background: 'var(--primary)', color: 'var(--gold)', padding: '8px', borderRadius: '10px' }}>
+              <CheckSquare size={20} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, color: 'var(--text-main, #0C1D3F)', fontSize: '17px', fontWeight: '900' }}>
+                تکالیف و تمرین‌های تعیین‌شده توسط مشاور
+              </h3>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted, gray)' }}>
+                مشاور شما این تمرین‌ها را برای تثبیت یادگیری تعیین کرده است. پس از اتمام، روی دکمه «انجام شد» بزنید.
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <span className="pill-badge" style={{ background: 'rgba(197,168,128,0.15)', color: 'var(--text-main)', fontSize: '11px' }}>
+              کل تکالیف: {homeworks.length}
+            </span>
+            <span className="pill-badge" style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981', fontSize: '11px' }}>
+              انجام‌شده: {homeworks.filter(h => h.status === 'completed').length}
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {homeworks.map(hw => {
+            const isDone = hw.status === 'completed';
+            return (
+              <div
+                key={hw.id}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '14px 18px',
+                  borderRadius: '12px',
+                  border: isDone ? '1px solid rgba(16,185,129,0.3)' : '1px solid var(--border-color)',
+                  background: isDone ? 'rgba(16,185,129,0.04)' : 'var(--bg-main)',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 260px' }}>
+                  <button
+                    onClick={() => handleToggleHomework(hw.id)}
+                    style={{
+                      width: '26px',
+                      height: '26px',
+                      borderRadius: '8px',
+                      border: isDone ? 'none' : '2px solid var(--border-color)',
+                      background: isDone ? '#10B981' : 'transparent',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      flexShrink: 0
+                    }}
+                    title={isDone ? 'بازگردانی به حالت در انتظار' : 'تیک زدن به عنوان انجام شد'}
+                  >
+                    {isDone && <Check size={16} />}
+                  </button>
+
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '14px', color: isDone ? 'var(--text-muted)' : 'var(--text-main)', textDecoration: isDone ? 'line-through' : 'none' }}>
+                        {hw.title}
+                      </span>
+                      <span className="pill-badge" style={{ fontSize: '10px', background: 'rgba(197,168,128,0.15)', color: 'var(--gold-dark)', borderColor: 'transparent' }}>
+                        {hw.subject || 'عمومی'}
+                      </span>
+                    </div>
+                    {hw.description && (
+                      <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                        {hw.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Clock size={12} />
+                    مهلت: {hw.due_date || 'امروز'}
+                  </span>
+
+                  <button
+                    onClick={() => handleToggleHomework(hw.id)}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      border: isDone ? '1px solid #10B981' : '1px solid var(--gold)',
+                      background: isDone ? 'rgba(16,185,129,0.1)' : 'var(--primary)',
+                      color: isDone ? '#10B981' : 'var(--gold)'
+                    }}
+                  >
+                    {isDone ? 'انجام شد ✓' : 'علامت‌گذاری انجام'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {homeworks.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)', fontSize: '13px' }}>
+              در حال حاضر تکلیف فعالی برای شما ثبت نشده است. پس از ارائه تمرین جدید توسط مشاور، در اینجا نمایش داده خواهد شد.
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '20px', marginBottom: '30px' }}>

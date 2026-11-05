@@ -99,29 +99,66 @@ if (preg_match('#^/auth/assign-advisor/(\d+)#', $cleanPath, $matches)) {
 }
 
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 // ۳. اندپوینت‌های مدیر موسسه (Manager)
 // ---------------------------------------------------------------------
+if ($cleanPath === '/auth/manager/data' || $cleanPath === '/manager_dashboard.php') {
+    require __DIR__ . '/manager_dashboard.php';
+    exit();
+}
+
+if ($cleanPath === '/auth/manager/add-advisor') {
+    $_GET['action'] = 'add-advisor';
+    require __DIR__ . '/manager_dashboard.php';
+    exit();
+}
+
+if ($cleanPath === '/auth/manager/remove-advisor') {
+    $_GET['action'] = 'remove-advisor';
+    require __DIR__ . '/manager_dashboard.php';
+    exit();
+}
+
+if ($cleanPath === '/auth/manager/assign-student') {
+    $_GET['action'] = 'assign-student';
+    require __DIR__ . '/manager_dashboard.php';
+    exit();
+}
+
+if ($cleanPath === '/auth/manager/add-student') {
+    $_GET['action'] = 'add-student';
+    require __DIR__ . '/manager_dashboard.php';
+    exit();
+}
+
 if ($cleanPath === '/auth/manager/students') {
     require_auth($pdo);
-    $stmt = $pdo->query("
+    $user = require_auth($pdo);
+    $wId = (int)($user['workspace_id'] ?? 1);
+    $stmt = $pdo->prepare("
         SELECT s.*, adv.full_name as advisor_name
         FROM users s
         LEFT JOIN users adv ON adv.id = s.advisor_id
-        WHERE s.role = 'student'
+        WHERE s.role = 'student' AND s.workspace_id = ?
         ORDER BY s.id DESC
     ");
+    $stmt->execute([$wId]);
     json_response($stmt->fetchAll());
 }
 
 if ($cleanPath === '/auth/pending-students') {
-    require_auth($pdo);
-    $stmt = $pdo->query("SELECT * FROM users WHERE role = 'student' AND advisor_id IS NULL");
+    $user = require_auth($pdo);
+    $wId = (int)($user['workspace_id'] ?? 1);
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE role = 'student' AND advisor_id IS NULL AND workspace_id = ?");
+    $stmt->execute([$wId]);
     json_response($stmt->fetchAll());
 }
 
 if ($cleanPath === '/auth/advisors-list') {
-    require_auth($pdo);
-    $stmt = $pdo->query("SELECT id, full_name, phone_number, grade, custom_group FROM users WHERE role = 'advisor'");
+    $user = require_auth($pdo);
+    $wId = (int)($user['workspace_id'] ?? 1);
+    $stmt = $pdo->prepare("SELECT id, full_name, phone_number, grade, custom_group FROM users WHERE role = 'advisor' AND workspace_id = ?");
+    $stmt->execute([$wId]);
     json_response($stmt->fetchAll());
 }
 
@@ -131,6 +168,41 @@ if (preg_match('#^/auth/manager/student-dossier/(\d+)#', $cleanPath, $matches)) 
     $stmt->execute([$studentId]);
     $st = $stmt->fetch();
     json_response($st ?: ["id" => $studentId, "full_name" => "دانش‌آموز"]);
+}
+
+// ---------------------------------------------------------------------
+// ۳.۵. تکالیف دانش‌آموزان (Homeworks / Assignments)
+// ---------------------------------------------------------------------
+if ($cleanPath === '/records/homeworks') {
+    require __DIR__ . '/homeworks.php';
+    exit();
+}
+
+if ($cleanPath === '/records/homeworks/toggle') {
+    $_GET['action'] = 'toggle';
+    require __DIR__ . '/homeworks.php';
+    exit();
+}
+
+if ($cleanPath === '/records/homeworks/delete') {
+    $_GET['action'] = 'delete';
+    require __DIR__ . '/homeworks.php';
+    exit();
+}
+
+// ---------------------------------------------------------------------
+// ۳.۶. آپلود و مشاهده آزمون‌های روان‌شناختی دانش‌آموز (Assessment Uploads)
+// ---------------------------------------------------------------------
+if ($cleanPath === '/records/upload-test' || $cleanPath === '/upload_test.php') {
+    require __DIR__ . '/upload_test.php';
+    exit();
+}
+
+if (preg_match('#^/records/student-tests/(\d+)#', $cleanPath, $matches)) {
+    $studentId = (int)$matches[1];
+    $stmt = $pdo->prepare("SELECT * FROM student_assessment_uploads WHERE student_id = ? ORDER BY id DESC");
+    $stmt->execute([$studentId]);
+    json_response($stmt->fetchAll());
 }
 
 // ---------------------------------------------------------------------

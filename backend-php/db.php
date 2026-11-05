@@ -103,12 +103,17 @@ function get_json_input() {
 /**
  * استخراج توکن Bearer از هدر درخواست
  */
+/**
+ * استخراج توکن Bearer از هدر درخواست یا محیط‌های آپاچی/سشن
+ */
 function get_bearer_token() {
     $headers = null;
     if (isset($_SERVER['Authorization'])) {
         $headers = trim($_SERVER["Authorization"]);
     } else if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
         $headers = trim($_SERVER["HTTP_AUTHORIZATION"]);
+    } else if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $headers = trim($_SERVER["REDIRECT_HTTP_AUTHORIZATION"]);
     } elseif (function_exists('apache_request_headers')) {
         $requestHeaders = apache_request_headers();
         $requestHeaders = array_combine(array_map('ucwords', array_keys($requestHeaders)), array_values($requestHeaders));
@@ -120,6 +125,10 @@ function get_bearer_token() {
         if (preg_match('/Bearer\s(\S+)/i', $headers, $matches)) {
             return $matches[1];
         }
+    }
+    // بررسی کوکی توکن
+    if (!empty($_COOKIE['medulla_token'])) {
+        return trim($_COOKIE['medulla_token']);
     }
     return null;
 }
@@ -170,34 +179,37 @@ function verify_jwt($token) {
 }
 
 /**
- * اعتبارسنجی احراز هویت و بازگرداندن کاربر از دیتابیس
+ * اعتبارسنجی احراز هویت و بازگرداندن کاربر از دیتابیس با پشتیبانی از JWT، کوکی و Session
  */
 function require_auth($pdo) {
+    if (session_status() === PHP_SESSION_NONE) {
+        @session_start();
+    }
+
     $token = get_bearer_token();
-    if (!$token) {
-        json_error("توکن امنیتی ارسال نشده است. لطفاً وارد سیستم شوید.", 401);
-    }
-    $decoded = verify_jwt($token);
-    if (!$decoded) {
-        json_error("توکن منقضی یا نامعتبر است.", 401);
-    }
+    $decoded = $token ? verify_jwt($token) : null;
 
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? OR phone_number = ? LIMIT 1");
-    $stmt->execute([$decoded['id'] ?? 0, $decoded['sub'] ?? '']);
-    $user = $stmt->fetch();
-
-    if (!$user) {
-        // Fallback by role if found in payload
-        if (!empty($decoded['role'])) {
-            $stmtRole = $pdo->prepare("SELECT * FROM users WHERE role = ? LIMIT 1");
-            $stmtRole->execute([$decoded['role']]);
-            $user = $stmtRole->fetch();
+    // ۱. بررسی از طریق توکن JWT
+    if ($decoded) {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? OR phone_number = ? LIMIT 1");
+        $stmt->execute([$decoded['id'] ?? 0, $decoded['sub'] ?? '']);
+        $user = $stmt->fetch();
+        if ($user) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['role'] = $user['role'];
+            return $user;
         }
     }
 
-    if (!$user) {
-        json_error("کاربر یافت نشد یا دسترسی غیرمجاز است.", 401);
+    // ۲. بررسی از طریق PHP Session فعال
+    if (!empty($_SESSION['user_id'])) {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+        $stmt->execute([(int)$_SESSION['user_id']]);
+        $user = $stmt->fetch();
+        if ($user) {
+            return $user;
+        }
     }
 
-    return $user;
+    json_error("اعتبار ورود شما منقضی شده یا توکن امنیتی نامعتبر است. لطفاً مجدداً وارد شوید.", 401);
 }

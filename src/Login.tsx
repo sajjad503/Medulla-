@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { User, Lock, ArrowLeft, Loader2, Eye, EyeOff, UserPlus, Phone, Shield, Building, Award, GraduationCap, ShieldCheck, HeartHandshake } from 'lucide-react';
+import { 
+  User, Lock, ArrowLeft, Loader2, Eye, EyeOff, UserPlus, Phone, 
+  ExternalLink, Upload, CheckCircle2, FileText, AlertCircle, ShieldCheck 
+} from 'lucide-react';
 import api from './api';
 import MentoraLogo from './MentoraLogo';
 
@@ -8,19 +11,57 @@ interface LoginProps {
   onBackToLanding?: () => void;
 }
 
+// لیست آزمون‌های استاندارد هدایت تحصیلی و کنکور
+const ASSESSMENT_TESTS = [
+  {
+    key: 'mbti',
+    title: 'آزمون تیپ‌شناسی شخصیتی MBTI',
+    desc: 'شناسایی ترجیحات ۱۶ گانه شخصیتی و شیوه بهینه یادگیری',
+    url: 'https://esanj.ir/mbti-personality-test'
+  },
+  {
+    key: 'holland',
+    title: 'آزمون رغبت‌سنجی شغلی و تحصیلی هالند (RIASEC)',
+    desc: 'گرایش‌سنجی رشته‌های دانشگاهی و مشاغل متناسب با استعداد',
+    url: 'https://esanj.ir/holland-career-test'
+  },
+  {
+    key: 'gardner',
+    title: 'آزمون هوش‌های چندگانه گاردنر',
+    desc: 'کشف استعدادهای ۸ گانه ذهنی و استراتژی مطالعه',
+    url: 'https://esanj.ir/gardner-multiple-intelligences-test'
+  },
+  {
+    key: 'vark',
+    title: 'آزمون سبک‌های یادگیری وارک (VARK)',
+    desc: 'یادگیری دیداری، شنیداری، خواندنی/نوشتنی یا حرکتی',
+    url: 'https://esanj.ir/vark-learning-styles-test'
+  },
+  {
+    key: 'study_skills',
+    title: 'آزمون مهارت‌های مطالعه و مدیریت زمان',
+    desc: 'سنجش روش‌های خلاصه‌نویسی، مرور، تست‌زنی و تمرکز',
+    url: 'https://esanj.ir/study-skills-assessment'
+  }
+];
+
 export default function Login({ onLogin, onBackToLanding }: LoginProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   
-  // Login States
-  const [loginUsername, setLoginUsername] = useState('09910746198');
-  const [loginPassword, setLoginPassword] = useState('123');
+  // Login States - خالی بودن پیش‌فرض جهت رفع هرگونه ورود بدون احراز هویت
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   
   // Register States
   const [regFullName, setRegFullName] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
+
+  // Assessment Uploads State (for registration)
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, { fileName: string; fileUrl: string; uploading: boolean }>>({});
+  const [uploadError, setUploadError] = useState('');
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -100,7 +141,7 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
     };
 
     draw();
-    const timer = setTimeout(() => setShowForm(true), 600);
+    const timer = setTimeout(() => setShowForm(true), 400);
     const handleResize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -124,7 +165,7 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
           .then(res => {
             if (res.data?.valid && res.data.advisor) {
               setInvitedAdvisor(res.data.advisor);
-              setAuthMode('register'); // Switch to register automatically for invited new students
+              setAuthMode('register');
             }
           })
           .catch(() => {});
@@ -132,13 +173,13 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
     } catch (_) {}
   }, []);
 
-  const handleLoginSubmit = async (e?: React.FormEvent, customPhone?: string, customPass?: string) => {
+  const handleLoginSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const phone = customPhone || loginUsername;
-    const pass = customPass || loginPassword;
+    const phone = loginUsername.trim();
+    const pass = loginPassword.trim();
 
     if(!phone || !pass) {
-      setError('لطفاً شماره موبایل و رمز عبور را وارد کنید.');
+      setError('لطفاً شماره موبایل و رمز عبور خود را وارد کنید.');
       return;
     }
 
@@ -153,29 +194,85 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
       });
 
       const token = response.data.access_token;
-      localStorage.setItem('mentora_token', token);
+      if (token) {
+        localStorage.setItem('mentora_token', token);
+      }
 
-      const payloadBase64 = token.split('.')[1];
-      const decodedPayload = JSON.parse(window.atob(payloadBase64));
-      
-      onLogin(decodedPayload.role);
+      const role = response.data.role || 'student';
+      onLogin(role);
     } catch (err: any) {
       if (err.response && err.response.status === 401) {
-        setError('نام کاربری یا رمز عبور اشتباه است.');
+        setError('شماره موبایل یا رمز عبور اشتباه است.');
       } else if (err.response && err.response.status === 403) {
-        setError(err.response.data?.detail || 'اکانت شما در حال حاضر تعلیق یا در انتظار تایید است.');
+        setError(err.response.data?.detail || 'اکانت شما در حال حاضر تعلیق یا در انتظار تایید مدیریت است.');
       } else {
-        setError('ارتباط با سرور برقرار نشد. وضعیت سرور را بررسی کنید.');
+        setError(err.response?.data?.detail || 'خطا در برقراری ارتباط با سرور. لطفاً مجدداً تلاش کنید.');
       }
     } finally {
       setLoading(false);
     }
   };
 
+  const handleFileUpload = async (testKey: string, testTitle: string, file: File) => {
+    if (!file) return;
+
+    // بررسی حجم حداکثر ۵ مگابایت
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError(`حجم فایل "${file.name}" بیش از ۵ مگابایت است.`);
+      return;
+    }
+
+    // بررسی نوع فایل
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!allowed.includes(file.type)) {
+      setUploadError('تنها آپلود فایل‌های تصویر (JPG, PNG) یا اسناد PDF مجاز است.');
+      return;
+    }
+
+    setUploadError('');
+    setUploadedFiles(prev => ({
+      ...prev,
+      [testKey]: { fileName: file.name, fileUrl: '', uploading: true }
+    }));
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64Data = reader.result as string;
+          const res = await api.post('/records/upload-test', {
+            test_key: testKey,
+            test_title: testTitle,
+            file_name: file.name,
+            file_base64: base64Data,
+            phone_number: regPhone
+          });
+          setUploadedFiles(prev => ({
+            ...prev,
+            [testKey]: { fileName: file.name, fileUrl: res.data?.file_url || 'uploaded', uploading: false }
+          }));
+        } catch (innerErr) {
+          // در صورت خطا در آپلود مستقیم، به صورت لوکال نگه می‌داریم
+          setUploadedFiles(prev => ({
+            ...prev,
+            [testKey]: { fileName: file.name, fileUrl: 'local', uploading: false }
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (e) {
+      setUploadError('خطا در پردازش فایل انتخابی.');
+      setUploadedFiles(prev => ({
+        ...prev,
+        [testKey]: { fileName: '', fileUrl: '', uploading: false }
+      }));
+    }
+  };
+
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if(!regFullName || !regPhone || !regPassword) {
-      setError('لطفاً تمامی فیلدها را پر کنید.');
+      setError('لطفاً نام، شماره موبایل و رمز عبور را وارد نمایید.');
       return;
     }
 
@@ -196,9 +293,9 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
       });
 
       if (invitedAdvisor) {
-        setSuccessMsg(`ثبت‌نام با موفقیت انجام شد و مستقیماً به ${invitedAdvisor.full_name} متصل شدید!`);
+        setSuccessMsg(`ثبت‌نام با موفقیت انجام شد و به مشاور خود (${invitedAdvisor.full_name}) متصل شدید!`);
       } else {
-        setSuccessMsg('ثبت‌نام با موفقیت انجام شد! حساب شما آماده ورود و تکمیل پرونده است.');
+        setSuccessMsg('ثبت‌نام با موفقیت انجام شد! کارنامه‌های آزمون شما نیز جهت بررسی مشاور ذخیره گردید.');
       }
 
       setLoginUsername(regPhone);
@@ -209,19 +306,13 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
       setTimeout(() => setAuthMode('login'), 2200);
     } catch (err: any) {
       if (err.response && err.response.status === 400) {
-        setError(err.response.data?.detail || 'این شماره موبایل قبلاً ثبت شده است.');
+        setError(err.response.data?.detail || 'این شماره موبایل قبلاً در سامانه ثبت شده است.');
       } else {
-        setError('خطا در ثبت‌نام. لطفاً دوباره تلاش کنید.');
+        setError('خطا در ثبت‌نام. لطفاً مجدداً بررسی و تلاش کنید.');
       }
     } finally {
       setLoading(false);
     }
-  };
-
-  const quickDemoLogin = (phone: string, roleTitle: string) => {
-    setLoginUsername(phone);
-    setLoginPassword('123');
-    handleLoginSubmit(undefined, phone, '123');
   };
 
   return (
@@ -244,11 +335,12 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
         <div 
           className="bento-card"
           style={{ 
-            width: '100%', maxWidth: '420px', 
-            background: 'rgba(253, 251, 247, 0.94)',
-            backdropFilter: 'blur(25px)',
+            width: '100%', maxWidth: '460px', 
+            background: 'var(--bg-panel, #FFFFFF)',
+            color: 'var(--text-main, #0C1D3F)',
             boxShadow: '0 30px 60px rgba(0,0,0,0.6), 0 0 40px rgba(230, 194, 135, 0.15)',
-            padding: '30px 25px',
+            border: '1.5px solid var(--border-color)',
+            padding: '26px 22px',
             textAlign: 'center',
             borderRadius: '20px',
             maxHeight: '94vh',
@@ -263,66 +355,67 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#0C1D3F',
+                  color: 'var(--primary)',
                   fontSize: '11px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
-                  opacity: 0.75
+                  opacity: 0.8
                 }}
               >
-                <span>← صفحه معرفی مدولا</span>
+                <span>← صفحه معرفی مدولاس</span>
               </button>
             </div>
           )}
+
           <div style={{ marginBottom: '18px' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
               <div style={{ width: '48px', height: '48px' }}>
                 <MentoraLogo style={{ filter: 'drop-shadow(0px 8px 12px rgba(0,0,0,0.15))' }} />
               </div>
             </div>
-            <h1 style={{ color: '#0C1D3F', fontSize: '26px', fontWeight: '900', letterSpacing: '2px', margin: 0 }}>
-              MEDULLA
+            <h1 style={{ color: 'var(--primary)', fontSize: '24px', fontWeight: '900', letterSpacing: '2px', margin: 0 }}>
+              MEDULLAS
             </h1>
-            <p style={{ color: 'rgba(12, 29, 63, 0.65)', fontSize: '12px', fontWeight: 'bold', marginTop: '4px' }}>
-              پلتفرم جامع مدیریت و مشاوره تحصیلی مدولا
+            <p style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: 'bold', marginTop: '4px' }}>
+              پلتفرم جامع مدیریت، آکادمی و مشاوره تحصیلی
             </p>
             {invitedAdvisor && (
               <div style={{
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid #10B981',
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid var(--success)',
                 borderRadius: '10px',
                 padding: '8px 12px',
                 marginTop: '10px',
                 fontSize: '11px',
-                color: '#065F46',
+                color: 'var(--success)',
                 fontWeight: 'bold',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '6px'
               }}>
-                <ShieldCheck size={15} color="#10B981" />
+                <ShieldCheck size={15} />
                 <span>لینک دعوت مستقیم: <strong>{invitedAdvisor.full_name}</strong></span>
               </div>
             )}
           </div>
 
           {/* تب‌های جابجایی بین ورود و ثبت‌نام */}
-          <div style={{ display: 'flex', background: 'rgba(12, 29, 63, 0.05)', borderRadius: '10px', padding: '4px', marginBottom: '18px' }}>
+          <div style={{ display: 'flex', background: 'var(--hover-bg)', borderRadius: '10px', padding: '4px', marginBottom: '18px', border: '1px solid var(--border-color)' }}>
             <button
               type="button"
               onClick={() => { setAuthMode('login'); setError(''); setSuccessMsg(''); }}
               style={{
                 flex: 1, padding: '9px', borderRadius: '8px', border: 'none', cursor: 'pointer',
                 fontSize: '13px', fontWeight: 'bold', transition: '0.3s',
-                background: authMode === 'login' ? '#0C1D3F' : 'transparent',
-                color: authMode === 'login' ? '#E6C287' : '#0C1D3F'
+                background: authMode === 'login' ? 'var(--primary)' : 'transparent',
+                color: authMode === 'login' ? 'var(--gold)' : 'var(--text-main)'
               }}
             >
-              ورود به سیستم
+              ورود به حساب
             </button>
             <button
               type="button"
@@ -330,8 +423,8 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
               style={{
                 flex: 1, padding: '9px', borderRadius: '8px', border: 'none', cursor: 'pointer',
                 fontSize: '13px', fontWeight: 'bold', transition: '0.3s',
-                background: authMode === 'register' ? '#0C1D3F' : 'transparent',
-                color: authMode === 'register' ? '#E6C287' : '#0C1D3F'
+                background: authMode === 'register' ? 'var(--primary)' : 'transparent',
+                color: authMode === 'register' ? 'var(--gold)' : 'var(--text-main)'
               }}
             >
               ثبت‌نام دانش‌آموز جدید
@@ -339,12 +432,12 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
           </div>
 
           {error && (
-            <div style={{ padding: '10px 14px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', marginBottom: '14px', border: '1px solid rgba(239,68,68,0.3)' }}>
+            <div style={{ padding: '10px 14px', background: 'rgba(239, 68, 68, 0.12)', color: 'var(--danger)', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', marginBottom: '14px', border: '1px solid var(--danger)' }}>
               {error}
             </div>
           )}
           {successMsg && (
-            <div style={{ padding: '10px 14px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', marginBottom: '14px', border: '1px solid rgba(16,185,129,0.3)' }}>
+            <div style={{ padding: '10px 14px', background: 'rgba(16, 185, 129, 0.12)', color: 'var(--success)', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', marginBottom: '14px', border: '1px solid var(--success)' }}>
               {successMsg}
             </div>
           )}
@@ -352,7 +445,7 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
           {authMode === 'login' ? (
             <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ position: 'relative' }}>
-                <User size={18} color="#0C1D3F" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                <User size={18} color="var(--primary)" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6 }} />
                 <input 
                   type="text" 
                   placeholder="شماره موبایل"
@@ -360,16 +453,16 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
                   onChange={(e) => setLoginUsername(e.target.value)}
                   style={{
                     width: '100%', padding: '12px 42px 12px 14px', borderRadius: '8px',
-                    border: '1.5px solid rgba(12, 29, 63, 0.15)', background: '#FFFFFF',
-                    color: '#0C1D3F', fontSize: '14px', fontWeight: 'bold', outline: 'none', transition: '0.3s'
+                    border: '1.5px solid var(--border-color)', background: 'var(--bg-panel)',
+                    color: 'var(--text-main)', fontSize: '14px', fontWeight: 'bold', outline: 'none', transition: '0.3s'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#C5A880'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(12, 29, 63, 0.15)'}
+                  onFocus={(e) => e.target.style.borderColor = 'var(--gold)'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                 />
               </div>
 
               <div style={{ position: 'relative' }}>
-                <Lock size={18} color="#0C1D3F" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                <Lock size={18} color="var(--primary)" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6 }} />
                 <input 
                   type={showPassword ? 'text' : 'password'} 
                   placeholder="رمز عبور"
@@ -377,18 +470,18 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
                   onChange={(e) => setLoginPassword(e.target.value)}
                   style={{
                     width: '100%', padding: '12px 42px 12px 42px', borderRadius: '8px',
-                    border: '1.5px solid rgba(12, 29, 63, 0.15)', background: '#FFFFFF',
-                    color: '#0C1D3F', fontSize: '14px', fontWeight: 'bold', outline: 'none', transition: '0.3s'
+                    border: '1.5px solid var(--border-color)', background: 'var(--bg-panel)',
+                    color: 'var(--text-main)', fontSize: '14px', fontWeight: 'bold', outline: 'none', transition: '0.3s'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#C5A880'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(12, 29, 63, 0.15)'}
+                  onFocus={(e) => e.target.style.borderColor = 'var(--gold)'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: '5px', opacity: 0.6 }}
                 >
-                  {showPassword ? <EyeOff size={16} color="#0C1D3F" /> : <Eye size={16} color="#0C1D3F" />}
+                  {showPassword ? <EyeOff size={16} color="var(--primary)" /> : <Eye size={16} color="var(--primary)" />}
                 </button>
               </div>
 
@@ -398,69 +491,18 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
                 className="gold-glow-btn"
                 style={{
                   width: '100%', padding: '12px', borderRadius: '8px', border: 'none',
-                  background: 'linear-gradient(135deg, #E6C287 0%, #C5A880 100%)',
+                  background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%)',
                   color: '#0C1D3F', fontSize: '14px', fontWeight: '900', cursor: 'pointer',
                   display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '6px'
                 }}
               >
-                {loading ? <Loader2 size={18} className="spin-animation" /> : <><ArrowLeft size={16} /> ورود به پنل کاربری</>}
+                {loading ? <Loader2 size={18} className="spin-animation" /> : <><ArrowLeft size={16} /> ورود به سامانه مدولاس</>}
               </button>
-
-              {/* دکمه‌های ورود سریع تستی برای تست هر ۴ بخش درخواستی کاربر */}
-              <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px dashed rgba(12,29,63,0.15)' }}>
-                <span style={{ fontSize: '11px', color: 'rgba(12,29,63,0.6)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
-                  ورود سریع آزمایشی (بدون نیاز به تایپ):
-                </span>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                  <button
-                    type="button"
-                    onClick={() => quickDemoLogin('09910746198', 'مدیریت کل')}
-                    style={{ padding: '7px 8px', borderRadius: '6px', border: '1px solid #0C1D3F', background: '#0C1D3F', color: '#E6C287', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
-                  >
-                    <Shield size={12} /> مدیر کل و صاحب پلتفرم (09910746198)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => quickDemoLogin('09120000002', 'مدیر مؤسسه')}
-                    style={{ padding: '7px 8px', borderRadius: '6px', border: '1px solid #C5A880', background: 'rgba(230,194,135,0.2)', color: '#0C1D3F', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
-                  >
-                    <Building size={12} /> مدیر مؤسسات / آکادمی (09120000002)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => quickDemoLogin('09120000003', 'مشاور ارشد')}
-                    style={{ padding: '7px 8px', borderRadius: '6px', border: '1px solid #C5A880', background: 'rgba(230,194,135,0.1)', color: '#0C1D3F', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
-                  >
-                    <Award size={12} /> مشاور ارشد (09120000003)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => quickDemoLogin('09120000004', 'دانش‌آموز ۱ تجربی')}
-                    style={{ padding: '7px 8px', borderRadius: '6px', border: '1px solid rgba(12,29,63,0.2)', background: '#fff', color: '#0C1D3F', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
-                  >
-                    <GraduationCap size={12} /> دانش‌آموز ۱ (09120000004)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => quickDemoLogin('09100341564', 'دانش‌آموز ۲ ریاضی')}
-                    style={{ padding: '7px 8px', borderRadius: '6px', border: '1px solid rgba(12,29,63,0.2)', background: '#fff', color: '#0C1D3F', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
-                  >
-                    <GraduationCap size={12} /> دانش‌آموز ۲ (09100341564)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => quickDemoLogin('09120000099', 'اولیا (والدین)')}
-                    style={{ padding: '7px 8px', borderRadius: '6px', border: '1px solid var(--gold)', background: 'rgba(230,194,135,0.25)', color: '#0C1D3F', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
-                  >
-                    <HeartHandshake size={13} color="#C5A880" /> پنل اولیا (09120000099)
-                  </button>
-                </div>
-              </div>
             </form>
           ) : (
-            <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'right' }}>
               <div style={{ position: 'relative' }}>
-                <UserPlus size={18} color="#0C1D3F" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                <UserPlus size={18} color="var(--primary)" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6 }} />
                 <input 
                   type="text" 
                   placeholder="نام و نام خانوادگی دانش‌آموز"
@@ -468,33 +510,33 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
                   onChange={(e) => setRegFullName(e.target.value)}
                   style={{
                     width: '100%', padding: '12px 42px 12px 14px', borderRadius: '8px',
-                    border: '1.5px solid rgba(12, 29, 63, 0.15)', background: '#FFFFFF',
-                    color: '#0C1D3F', fontSize: '14px', fontWeight: 'bold', outline: 'none', transition: '0.3s'
+                    border: '1.5px solid var(--border-color)', background: 'var(--bg-panel)',
+                    color: 'var(--text-main)', fontSize: '14px', fontWeight: 'bold', outline: 'none', transition: '0.3s'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#C5A880'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(12, 29, 63, 0.15)'}
+                  onFocus={(e) => e.target.style.borderColor = 'var(--gold)'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                 />
               </div>
 
               <div style={{ position: 'relative' }}>
-                <Phone size={18} color="#0C1D3F" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                <Phone size={18} color="var(--primary)" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6 }} />
                 <input 
                   type="text" 
-                  placeholder="شماره موبایل"
+                  placeholder="شماره موبایل دانش‌آموز"
                   value={regPhone}
                   onChange={(e) => setRegPhone(e.target.value)}
                   style={{
                     width: '100%', padding: '12px 42px 12px 14px', borderRadius: '8px',
-                    border: '1.5px solid rgba(12, 29, 63, 0.15)', background: '#FFFFFF',
-                    color: '#0C1D3F', fontSize: '14px', fontWeight: 'bold', outline: 'none', transition: '0.3s'
+                    border: '1.5px solid var(--border-color)', background: 'var(--bg-panel)',
+                    color: 'var(--text-main)', fontSize: '14px', fontWeight: 'bold', outline: 'none', transition: '0.3s'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#C5A880'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(12, 29, 63, 0.15)'}
+                  onFocus={(e) => e.target.style.borderColor = 'var(--gold)'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                 />
               </div>
 
               <div style={{ position: 'relative' }}>
-                <Lock size={18} color="#0C1D3F" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                <Lock size={18} color="var(--primary)" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6 }} />
                 <input 
                   type={showPassword ? 'text' : 'password'} 
                   placeholder="تعیین رمز عبور"
@@ -502,19 +544,129 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
                   onChange={(e) => setRegPassword(e.target.value)}
                   style={{
                     width: '100%', padding: '12px 42px 12px 42px', borderRadius: '8px',
-                    border: '1.5px solid rgba(12, 29, 63, 0.15)', background: '#FFFFFF',
-                    color: '#0C1D3F', fontSize: '14px', fontWeight: 'bold', outline: 'none', transition: '0.3s'
+                    border: '1.5px solid var(--border-color)', background: 'var(--bg-panel)',
+                    color: 'var(--text-main)', fontSize: '14px', fontWeight: 'bold', outline: 'none', transition: '0.3s'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#C5A880'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(12, 29, 63, 0.15)'}
+                  onFocus={(e) => e.target.style.borderColor = 'var(--gold)'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: '5px', opacity: 0.6 }}
                 >
-                  {showPassword ? <EyeOff size={16} color="#0C1D3F" /> : <Eye size={16} color="#0C1D3F" />}
+                  {showPassword ? <EyeOff size={16} color="var(--primary)" /> : <Eye size={16} color="var(--primary)" />}
                 </button>
+              </div>
+
+              {/* بخش آزمون‌های روان‌شناختی و بارگذاری نتایج (درخواستی کاربر) */}
+              <div style={{ 
+                marginTop: '10px', 
+                padding: '12px', 
+                background: 'var(--hover-bg)', 
+                borderRadius: '10px', 
+                border: '1px solid var(--border-color)' 
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <FileText size={15} color="var(--gold-dark)" />
+                  <span style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-main)' }}>
+                    آزمون‌های شخصیت‌شناسی و رغبت‌سنجی کنکور:
+                  </span>
+                </div>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '10px', lineHeight: '1.6' }}>
+                  می‌توانید وارد آزمون‌های زیر شوید و پس از دریافت کارنامه، تصویر یا PDF آن را جهت تحلیل اختصاصی مشاور آپلود نمایید:
+                </p>
+
+                {uploadError && (
+                  <div style={{ color: 'var(--danger)', fontSize: '11px', marginBottom: '8px', fontWeight: 'bold' }}>
+                    {uploadError}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '200px', overflowY: 'auto', paddingLeft: '4px' }}>
+                  {ASSESSMENT_TESTS.map(test => {
+                    const status = uploadedFiles[test.key];
+                    return (
+                      <div 
+                        key={test.key}
+                        style={{
+                          background: 'var(--bg-panel)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '8px',
+                          padding: '8px 10px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-main)' }}>
+                            {test.title}
+                          </span>
+                          <a 
+                            href={test.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            style={{ 
+                              color: 'var(--primary)', 
+                              fontSize: '11px', 
+                              fontWeight: 'bold', 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              gap: '3px',
+                              textDecoration: 'none'
+                            }}
+                          >
+                            شرکت در آزمون <ExternalLink size={12} />
+                          </a>
+                        </div>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                          {test.desc}
+                        </span>
+
+                        {/* دکمه آپلود فایل کارنامه */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                          <label style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: status?.fileName ? 'rgba(16, 185, 129, 0.12)' : 'rgba(12, 29, 63, 0.08)',
+                            color: status?.fileName ? 'var(--success)' : 'var(--text-main)',
+                            border: `1px solid ${status?.fileName ? 'var(--success)' : 'var(--border-color)'}`,
+                            borderRadius: '6px',
+                            padding: '4px 8px',
+                            fontSize: '10px',
+                            cursor: 'pointer',
+                            fontWeight: 'bold'
+                          }}>
+                            {status?.uploading ? (
+                              <Loader2 size={12} className="spin-animation" />
+                            ) : status?.fileName ? (
+                              <CheckCircle2 size={12} />
+                            ) : (
+                              <Upload size={12} />
+                            )}
+                            <span>{status?.fileName ? status.fileName.slice(0, 15) + '...' : 'آپلود کارنامه (JPG, PDF)'}</span>
+                            <input 
+                              type="file" 
+                              accept="image/jpeg,image/png,image/webp,application/pdf"
+                              style={{ display: 'none' }}
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) handleFileUpload(test.key, test.title, f);
+                              }}
+                            />
+                          </label>
+                          {status?.fileName && (
+                            <span style={{ fontSize: '10px', color: 'var(--success)', fontWeight: 'bold' }}>
+                              ثبت شد ✅
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <button 
@@ -522,11 +674,11 @@ export default function Login({ onLogin, onBackToLanding }: LoginProps) {
                 disabled={loading}
                 style={{
                   width: '100%', padding: '12px', borderRadius: '8px', border: 'none',
-                  background: '#0C1D3F', color: '#E6C287', fontSize: '14px', fontWeight: '900', cursor: 'pointer',
-                  display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '6px'
+                  background: 'var(--primary)', color: 'var(--gold)', fontSize: '14px', fontWeight: '900', cursor: 'pointer',
+                  display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '4px'
                 }}
               >
-                {loading ? <Loader2 size={18} className="spin-animation" /> : 'ثبت نام دانش‌آموز'}
+                {loading ? <Loader2 size={18} className="spin-animation" /> : 'تکمیل ثبت نام و اتصال به پلتفرم'}
               </button>
             </form>
           )}

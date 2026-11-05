@@ -2,6 +2,10 @@
   RewriteEngine On
   RewriteBase /
 
+  # عبور کامل هدر Authorization به FastCGI و PHP-FPM در هاست اشتراکی cPanel
+  SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
   # 1. فوروارد خودکار تمامی روت‌های API و احراز هویت به اسکریپت جامع PHP در پوشه api
   RewriteRule ^api/(.*)$ api/index.php [QSA,L]
   RewriteRule ^auth/(.*)$ api/index.php [QSA,L]
